@@ -12,14 +12,12 @@ tracked, and updates are automatic.
 
 ### Setup
 
-1. Create a private repo: `insightsoftware/simba-intelligence-skill`
-2. Push the `simba-intelligence-setup/` folder to it
-3. Add a README.md (outside the skill folder) explaining how to install it
+The repo is live at: **https://github.com/isw-da/simba-intelligence-skill**
 
 ### How team members install it
 
 **Claude (skill upload):**
-1. Clone or download the repo
+1. Clone the repo: `git clone https://github.com/isw-da/simba-intelligence-skill.git`
 2. Zip the `simba-intelligence-setup/` folder
 3. Upload in Claude: Settings → Capabilities → Skills
 

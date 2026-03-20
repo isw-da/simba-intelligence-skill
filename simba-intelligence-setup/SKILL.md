@@ -10,8 +10,10 @@ description: >
   air-gapped SI, SI teardown, SI fresh install, SI restart, Caddy reverse proxy
   for SI, Discovery web routing, BYOLLM providers for SI, or any SI post-install
   configuration. Also trigger for one-click SI install, SI installer script,
-  GUI installation of SI, or setting up SI on a new machine. Do NOT use for
-  general Kubernetes or Helm questions unrelated to Simba Intelligence.
+  GUI installation of SI, setting up SI on a new machine, enabling EDC
+  connectors, adding JDBC drivers, SI connector setup, or SI EDC configuration.
+  Do NOT use for general Kubernetes or Helm questions unrelated to Simba
+  Intelligence.
 ---
 
 # Simba Intelligence — Setup & Operations Skill
@@ -129,9 +131,16 @@ After SI is deployed and accessible, the configuration sequence is always:
 
 1. **Configure LLM provider** — `references/llm-config.md`
    SI is BYOLLM. Nothing AI-powered works without this.
-2. **Create data connection** — `references/post-install.md` § Data Connections
-3. **Create data source** — `references/post-install.md` § Data Source Agent
-4. **Query in Playground** — `references/post-install.md` § Playground
+2. **(Optional) Enable additional EDC connectors** — `references/enabling-edcs.md`
+   SI ships with 43+ connector images but only PostgreSQL and Python are
+   enabled by default. If the user needs Snowflake, Oracle, Redshift, MySQL,
+   BigQuery, S3, or any other connector, it must be enabled via Helm values.
+   Some connectors also require uploading external JDBC drivers.
+   CRITICAL: The subchart alias is `discovery`, not `logi-symphony`. All
+   EDC overrides go under `discovery.edc.<connector>`.
+3. **Create data connection** — `references/post-install.md` § Data Connections
+4. **Create data source** — `references/post-install.md` § Data Source Agent
+5. **Query in Playground** — `references/post-install.md` § Playground
 
 ---
 
@@ -248,6 +257,9 @@ Use this when the customer's team does not use Claude.
 ---
 
 ## Team sharing and maintenance
+
+The skill source of truth is the GitHub repo:
+**https://github.com/isw-da/simba-intelligence-skill**
 
 For guidance on deploying this skill across the SE team, keeping it
 updated, and managing contributions, consult `references/team-sharing.md`.
