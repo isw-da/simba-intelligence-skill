@@ -18,9 +18,36 @@ description: >
 
 # Simba Intelligence — Setup & Operations Skill
 
+<!-- Skill version: 2026-03-18 -->
+
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and
 production access, LLM configuration, data connections, and troubleshooting.
+
+---
+
+## Keeping this skill up to date
+
+The source of truth for this skill is:
+**https://github.com/isw-da/simba-intelligence-skill**
+
+**At the start of every conversation where this skill is used**, check
+whether a newer version is available:
+
+1. If Claude has access to GitHub tools (MCP, web fetch, etc.), fetch the
+   latest version date from:
+   `https://raw.githubusercontent.com/isw-da/simba-intelligence-skill/main/simba-intelligence-setup/SKILL.md`
+   Compare the `<!-- Skill version: ... -->` comment at the top with the
+   one in the currently loaded skill. If the remote version is newer, tell
+   the user: "A newer version of the SI setup skill is available in the
+   repo. You may want to download and re-upload it for the latest guidance."
+
+2. If Claude does NOT have GitHub access, mention once at the start of the
+   conversation: "This skill is maintained at
+   https://github.com/isw-da/simba-intelligence-skill — if you haven't
+   updated recently, it's worth pulling the latest version."
+
+Do not repeat this check after the first message in a conversation.
 
 ---
 
