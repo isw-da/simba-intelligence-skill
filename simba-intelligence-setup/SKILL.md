@@ -18,7 +18,7 @@ description: >
 
 # Simba Intelligence — Setup & Operations Skill
 
-<!-- Skill version: 2026-03-18 -->
+<!-- Skill version: 2026-04-01 -->
 
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and
@@ -185,6 +185,8 @@ Quick triage:
 | Docker CLI "daemon not running" | Docker Desktop engine not connected — quit and reopen fully |
 | kubectl "connection refused" | Kubernetes not running — check Docker Desktop or cluster health |
 | "No LLM Configuration Found" | LLM provider not configured |
+| start-vis 400 / suggestions fail | Version mismatch — use matching published chart, not image tag overrides |
+| Playground shows raw JSON `{"name":"query_data"...}` | LLM too small (need 8B+) or wrong LiteLLM prefix (use `ollama_chat/`) |
 | Pods in Pending/Unknown | Node not ready or resource limits exceeded |
 
 ---

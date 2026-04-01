@@ -242,6 +242,85 @@ Common causes: database not ready, migration failed, misconfigured values.
 
 ---
 
+## Symptom: start-vis 400 error / suggestions fail / "cannot access local variable 'sources'"
+
+**Cause:** Version mismatch between Simba Intelligence app and Discovery
+(Composer) subchart. This happens when upgrading by overriding image tags
+(`--set image.tag=26.1.1`) on an older chart instead of using the matching
+published chart.
+
+The SI app sends API calls (e.g. `type: ALL` in start-vis) that the older
+Discovery version does not support.
+
+### Diagnose:
+```bash
+# Check if app and Discovery versions match
+kubectl -n simba-intel get pods -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' | sort -u | grep -E "simba-intelligence|zoomdata:"
+```
+
+If SI shows `26.1.1` but Discovery shows `25.4`, versions are mismatched.
+
+### Fix:
+**Always use the official published Helm chart** — never just override image
+tags on an old chart. The chart bundles the matching Discovery subchart.
+
+```bash
+# Pull the matching chart
+helm pull oci://docker.io/insightsoftware/simba-intelligence-chart \
+  --version <VERSION>
+
+# Check available versions
+# https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags
+
+# Upgrade with the new chart
+helm upgrade si ./simba-intelligence-chart-<VERSION>.tgz \
+  -f simba-values.yaml \
+  --namespace simba-intel
+```
+
+---
+
+## Symptom: DB migration job fails with "fakeurl" error
+
+**Cause:** The db-migrate job completes the Alembic schema migration but
+then fails on a post-migration API call to a placeholder URL.
+
+### Diagnose:
+```bash
+kubectl -n simba-intel logs <db-migrate-pod> --tail=20
+# Look for: "HTTPSConnectionPool(host='fakeurl'...)"
+```
+
+### Fix:
+The Alembic migration itself usually succeeds. Run it manually if needed:
+
+```bash
+kubectl -n simba-intel exec <web-pod> -- \
+  env DISABLE_DB_MIGRATIONS=false \
+  python3.11 -m simba_intelligence.main migrate
+```
+
+---
+
+## Symptom: Playground shows raw JSON like `{"name": "query_data", "arguments": {...}}`
+
+**Cause:** The LLM is outputting tool calls as text content instead of
+using the proper function-calling format. Two common causes:
+
+1. **Model too small** — Llama 3.2 3B cannot handle SI's tool-calling
+   pipeline. Use Llama 3.1 8B minimum.
+2. **Wrong LiteLLM provider prefix** — Using `ollama/` instead of
+   `ollama_chat/` in LiteLLM config causes streaming tool calls to be
+   returned as plain text.
+
+### Fix:
+In LiteLLM config, ensure chat models use `ollama_chat/` prefix:
+```yaml
+model: "ollama_chat/llama3.1:8b"    # NOT "ollama/llama3.1:8b"
+```
+
+---
+
 ## Symptom: Service port error "does not have a service port 8082"
 
 Wrong port-forward syntax. Must include the full mapping:

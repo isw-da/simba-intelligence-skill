@@ -170,8 +170,11 @@ SI requires an LLM provider for AI capabilities. In an air-gapped
 environment, the LLM provider must be reachable from the cluster's network.
 
 Options:
+- **Ollama + LiteLLM** (recommended for local/POC) — runs entirely on the
+  local machine with no network access needed. See `references/llm-config.md`
+  § "Air-gapped / local LLM" for full setup instructions.
 - **Self-hosted LLM** behind an OpenAI-compatible API endpoint — configure
-  as OpenAI provider with the internal endpoint URL
+  via the LiteLLM proxy approach described in `references/llm-config.md`
 - **Network exception** for outbound 443 to a specific LLM provider endpoint
   (e.g. Vertex AI, Azure OpenAI) via proxy or firewall rule
 - **AWS Bedrock via VPC endpoint** — no public internet needed if Bedrock
