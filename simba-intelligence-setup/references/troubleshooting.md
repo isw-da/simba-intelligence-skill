@@ -307,8 +307,9 @@ kubectl -n simba-intel exec <web-pod> -- \
 **Cause:** The LLM is outputting tool calls as text content instead of
 using the proper function-calling format. Two common causes:
 
-1. **Model too small** — Llama 3.2 3B cannot handle SI's tool-calling
-   pipeline. Use Llama 3.1 8B minimum.
+1. **Model too small or wrong model** — Llama 3.2 3B and Mistral 7B cannot
+   handle SI's tool-calling pipeline. Use Gemma 4 e4b minimum (has native
+   function-calling trained in).
 2. **Wrong LiteLLM provider prefix** — Using `ollama/` instead of
    `ollama_chat/` in LiteLLM config causes streaming tool calls to be
    returned as plain text.
@@ -316,8 +317,60 @@ using the proper function-calling format. Two common causes:
 ### Fix:
 In LiteLLM config, ensure chat models use `ollama_chat/` prefix:
 ```yaml
-model: "ollama_chat/llama3.1:8b"    # NOT "ollama/llama3.1:8b"
+model: "ollama_chat/gemma4:e4b"    # NOT "ollama/gemma4:e4b"
 ```
+
+---
+
+## Symptom: Playground says "This request is taking longer than expected"
+
+**Cause:** The reverse proxy timeout is too short for local model response
+times. SI's pipeline makes 5-8 sequential LLM calls per query, each taking
+7-12 seconds with local models. Total: 60-120 seconds.
+
+### Fix:
+Increase the reverse proxy timeout to 300 seconds. For Caddy:
+```
+reverse_proxy host.docker.internal:8082 {
+    transport http {
+        read_timeout 300s
+        write_timeout 300s
+    }
+    flush_interval -1
+}
+```
+
+Note: the backend may have completed successfully (check logs for
+`POST /api/v1/chat/stream HTTP/1.1 200`). The timeout is on the proxy/
+browser side, not the server.
+
+---
+
+## Symptom: Playground shows "Technical Error" on complex queries with local LLM
+
+**Cause:** The local model generated invalid start-vis JSON. Common errors
+from logs:
+
+- `JSON syntax error, attempting to repair: Expecting ',' delimiter` — model
+  produced malformed JSON
+- `Unrecognized field "limit"` or `Unrecognized field "oneOf"` — model leaked
+  JSON schema syntax into the actual payload
+
+### Diagnose:
+```bash
+kubectl -n simba-intel logs deploy/si-simba-intelligence-chart --tail=100 \
+  | grep -E "JSON syntax|Unrecognized field|Error retrieving"
+```
+
+### Fix:
+- Use a larger model. Gemma 4 e4b handles most queries. Cross-field
+  correlations and very complex aggregations may need 24B+.
+- Select a specific data source instead of "All" — reduces the number of
+  LLM calls and context size.
+- Rephrase the question more simply — "How many disputes per payment method?"
+  instead of "How do disputes correlate with payment methods?"
+- If the conversation has a failed query in history, start a fresh Playground
+  session (refresh the page) — failed context can poison subsequent queries.
 
 ---
 
