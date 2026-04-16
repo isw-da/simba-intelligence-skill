@@ -8,8 +8,9 @@ description: >
   connections, SI data source agent, SI playground, SI troubleshooting, SI on
   Docker Desktop, kind cluster SI, SI on EKS, SI on AKS, SI on GKE, SI on-prem,
   air-gapped SI, SI teardown, SI fresh install, SI restart, Caddy reverse proxy
-  for SI, Discovery web routing, BYOLLM providers for SI, or any SI post-install
-  configuration. Also trigger for one-click SI install, SI installer script,
+  for SI, Discovery web routing, BYOLLM providers for SI, custom EDC connector,
+  build EDC, GraphQL EDC, or any SI post-install configuration. Also trigger
+  for one-click SI install, SI installer script,
   GUI installation of SI, setting up SI on a new machine, enabling EDC
   connectors, adding JDBC drivers, SI connector setup, or SI EDC configuration.
   Do NOT use for general Kubernetes or Helm questions unrelated to Simba
@@ -165,6 +166,13 @@ After SI is deployed and accessible, the configuration sequence is always:
    Some connectors also require uploading external JDBC drivers.
    CRITICAL: The subchart alias is `discovery`, not `logi-symphony`. All
    EDC overrides go under `discovery.edc.<connector>`.
+3. **(Optional) Build custom EDC connectors** — `references/custom-edc-build.md`
+   For data sources not covered by the bundled connectors (REST APIs,
+   GraphQL, WebSocket, proprietary protocols), custom EDCs can be built
+   from the public Zoomdata template. A verified GraphQL EDC exists as
+   a reference implementation. The guide covers the full workflow:
+   template setup, edc-api extraction, version compatibility fixes,
+   Docker build, Kubernetes deployment, Consul and Composer registration.
 3. **Create data connection** — `references/post-install.md` § Data Connections
 4. **Create data source** — `references/post-install.md` § Data Source Agent
 5. **Query in Playground** — `references/post-install.md` § Playground

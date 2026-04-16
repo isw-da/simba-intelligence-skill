@@ -238,7 +238,7 @@ expects credentials at the validation layer.
 **Workaround for demos:** Use real AWS S3 with IAM credentials, or
 park S3 and use Oracle + PostgreSQL for the federated query story.
 
-### No generic JDBC EDC
+### No generic JDBC EDC (workaround available)
 
 The chart does not include a generic JDBC connector. Every EDC is
 purpose-built for a specific database type. To connect to a new
@@ -246,8 +246,11 @@ database type (e.g. Microsoft Fabric via the Simba Fabric JDBC driver),
 a new EDC image would need to be created by engineering, or the
 SparkSQL EDC may be adaptable (untested).
 
-**Status:** Open. Needs engineering input on whether the SparkSQL EDC
-can accept alternative JDBC driver classes.
+**Workaround:** Custom EDC connectors can now be built from the public
+template at https://github.com/Zoomdata/edc-cratedb. A GraphQL EDC
+has been built and verified using this approach. See
+`references/custom-edc-build.md` for the full guide including version
+compatibility fixes, deployment steps, and Consul/Composer registration.
 
 ### Connector list does not include Fabric
 
