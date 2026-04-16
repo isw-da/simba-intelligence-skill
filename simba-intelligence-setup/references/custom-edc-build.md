@@ -307,8 +307,9 @@ in v25.4.0. Use Basic auth directly on API endpoints instead.
 
 ## Verified custom EDC: GraphQL
 
-A working GraphQL EDC connector has been built and tested. Source code
-at `/tmp/edc-graphql` (to be moved to a permanent repo).
+A working GraphQL EDC connector has been built and tested.
+
+**Source code:** https://github.com/isw-da/edc-graphql
 
 ### Capabilities
 
@@ -360,10 +361,32 @@ protocol:
 5. Update `createDescriptionProvider()` with your connection parameters
 6. Build, containerise, deploy, register
 
+### Known limitation: QE aggregation queries
+
+RAW_DATA_ONLY connectors experience `NumberFormatException` in the
+Query Engine's `RowConverter` when aggregation queries (GROUP BY, COUNT,
+SUM) are executed. The QE stores field metadata in its own order (likely
+alphabetical) and uses that order to parse positional field values from
+the fetch response. If the connector returns fields in a different order
+(e.g. introspection order), the type mapping breaks.
+
+**Root cause:** The QE sends the raw query `{ collectionName }` with no
+field list, then maps the positional response against its stored metadata.
+The connector returns fields in schema introspection order, which does
+not match the QE's stored order.
+
+**Fix (not yet implemented):** Read `StructuredRequest.getFieldMetadata()`
+to get the QE's expected field order and return fields in that order in
+both `ResponseMetadata` and `Record`.
+
+**Workaround:** Raw data queries (filter, sort, project) work correctly.
+Aggregation is handled client-side by SI's LLM query agent for simple
+cases. Complex aggregation requires the fix above.
+
 ### Planned connectors
 
 | Connector | Protocol | Status |
 |---|---|---|
-| GraphQL | HTTP POST + introspection | Built and tested |
+| GraphQL | HTTP POST + introspection | Built, tested, deployed (https://github.com/isw-da/edc-graphql) |
 | SAP Datasphere | JDBC (HANA Cloud driver) | Planned (simple, extend GenericSQLDataProvider) |
 | Qlik | WebSocket (QIX Engine API) | Planned (implement IDataProvider directly) |
