@@ -31,6 +31,8 @@ _GUIDE_MAP: dict[str, str] = {
     "custom-edc-build":    "custom-edc-build.md",
     "post-install":        "post-install.md",
     "troubleshooting":     "troubleshooting.md",
+    "datadog-logs":        "datadog-logs.md",
+    "tenant-discovery":    "tenant-discovery.md",
     "gui-install-guide":   "gui-install-guide.md",
     "team-sharing":        "team-sharing.md",
     "teardown":            "teardown.md",
