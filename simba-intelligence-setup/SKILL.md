@@ -13,13 +13,16 @@ description: >
   for one-click SI install, SI installer script,
   GUI installation of SI, setting up SI on a new machine, enabling EDC
   connectors, adding JDBC drivers, SI connector setup, or SI EDC configuration.
+  Also trigger for connecting SI to SAP Datasphere, SAP HANA Cloud, or HANA
+  on-prem (saphana vs saphanacloud EDC selection, ngdbc.jar staging, Datasphere
+  Database User and Open SQL Schema setup, JDBC URL format for HANA Cloud).
   Do NOT use for general Kubernetes or Helm questions unrelated to Simba
   Intelligence.
 ---
 
 # Simba Intelligence — Setup & Operations Skill
 
-<!-- Skill version: 2026-04-04 -->
+<!-- Skill version: 2026-05-18 -->
 
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and
@@ -173,7 +176,16 @@ After SI is deployed and accessible, the configuration sequence is always:
    a reference implementation. The guide covers the full workflow:
    template setup, edc-api extraction, version compatibility fixes,
    Docker build, Kubernetes deployment, Consul and Composer registration.
-3. **Create data connection** — `references/post-install.md` § Data Connections
+4. **(SAP shops) Connect to SAP Datasphere** — `references/datasphere-connector.md`
+   Datasphere exposes a HANA Cloud SQL endpoint per space via Database
+   Users (Open SQL Schema). Use the `saphana` EDC (not the misleadingly
+   named `saphanacloud`, which is a DataDirect Hybrid Pipeline driver
+   requiring a Progress-hosted bridge). The reference covers the
+   Datasphere-side Database User setup, ngdbc.jar staging into the
+   `composer-shared-volume` PVC, JDBC URL format, and the academy-trial
+   IP-allowlist gotcha that blocks external clients on free trial
+   tenants.
+5. **Create data connection** — `references/post-install.md` § Data Connections
 4. **Create data source** — `references/post-install.md` § Data Source Agent
 5. **Query in Playground** — `references/post-install.md` § Playground
 
