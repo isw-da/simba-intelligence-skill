@@ -5,7 +5,7 @@ into five tiers by complexity. Every question has a Postgres truth
 value verifiable directly without going through the semantic layer.
 
 Sources under test:
-- Perf = `6a0c10e0ed27777725d9488e` (Amplifin Branch Performance)
+- Perf = `6a0c4fc3ed27777725d948eb` (Amplifin Branch Performance)
 - Due  = `6a0c10eded27777725d948ab` (Amplifin Monthly Dues)
 - Fee  = `6a0c10f9ed27777725d948b8` (Amplifin Fee Statistics)
 
