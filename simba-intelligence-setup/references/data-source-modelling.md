@@ -392,3 +392,40 @@ key's home account.
 - `query-tracing.md` for reconstructing what the LLM did in Datadog
 - `enabling-edcs.md` for setting up the EDC connectors that back the
   source's connection
+
+---
+
+## The Custom SQL Entity finding (2026-05-19 update)
+
+Earlier testing suggested Custom SQL Entity was semantically broken
+(returning values off by 6000x on bare aggregates). Subsequent
+investigation showed the cause:
+
+**The LLM auto-injects a time filter on any field of `dataType=TIME`
+in the source's discovered fields.** This applies to Custom SQL
+entities the same as native collections. When a Custom SQL entity's
+SELECT exposes a date column, the LLM's "last-month + current-month"
+filter is bound to it and applied even when the question is
+all-time.
+
+**Fix**: split fact data into two Custom SQL entities per fact:
+
+1. **All-time entity**: `SELECT ... SUM(...) ... GROUP BY branch_cd`
+   with no date column in the SELECT list. The LLM cannot apply a
+   time filter because there is no TIME field to bind to. Bare
+   aggregate questions return correct all-time values.
+
+2. **Per-month entity**: `SELECT ... month_dt, ...` with the date
+   column. The LLM applies the auto-filter, which is correct
+   behaviour for trend ("by month") and single-period ("for May
+   2026") questions.
+
+Both entities join to the dim hub by `branch_cd`. The LLM picks
+between them based on the question's grain.
+
+This pattern brought Amplifin NLQ pass rate from 47% (single entity
+with time field) to 92% (eight-entity split) on the first run, with
+no underlying data changes.
+
+See `use-cases/debit-order-payments/import-guide.md` for the full
+recipe.
