@@ -123,43 +123,45 @@ service:simba-intelligence "sessionId=<uuid>"
 
 ## Tracing an SI query end to end
 
-SI is BYOLLM and multi-service. A single NLQ question fans out across
-three log streams. Join them on tenant UUID, session ID, source ID, or
-visualisation `cid`.
+The full pipeline (chat entry, Celery's actual role, query engine,
+EDC connector, Vertex AI) is documented in `query-tracing.md`. Headline
+corrections to what was here before:
 
-### 1. NLQ entry and auth
+- The NLQ entry point is `POST /intelligence/api/v1/chat/stream`,
+  handled **synchronously by the SI app pod**, not by Celery.
+- The Celery worker (`simba-intelligence-chart-celery-worker`) handles
+  background tasks only: `validate_and_cache_suggestions`,
+  `generate_suggestions_scheduled_task`, `cleanup_expired_oauth_tokens_task`,
+  etc. Chats do not go through it.
+- The natural-language question is **never logged** anywhere we found.
+  Privacy plus.
+- Vertex AI is the LLM provider in use; quota errors (`429 Resource
+  exhausted`) are the most common error pattern.
 
-```
-service:simba-intelligence kube_cluster_name:<cluster> "intelligence/api/v1"
-```
+See `query-tracing.md` for the per-stage patterns, reconstruction
+recipe across services, and the list of additional service tags
+(`agents-runtime`, `data-analyst`, `text-summarizer`, etc.) found
+during the investigation.
 
-Look for `auth/check-auth` (200 means SI accepted the Symphony session),
-`api/sources/<source-id>` (source enumeration), and the composer auth
-WARNING `Failed to retrieve username and tenant from Symphony Managed
-session: 410 Client Error: Gone` (session expired or invalidated).
+## LLM observability (Vertex AI)
 
-### 2. Planning (Celery worker)
-
-```
-service:simba-intelligence container_name:simba-intelligence-chart-celery-worker "<tenant-uuid>"
-```
-
-Worker logs show VDD capability fallback (`Using VDD tenant's CHAT
-capability as fallback`), source enrichment, and any LLM provider
-errors. Stack traces from `simba_intelligence/llm/services/ai_service_*.py`
-land here too.
-
-### 3. SQL execution
+Quick patterns; full context in `query-tracing.md` § LLM observability.
 
 ```
-service:zoomdata-query-engine "<topology-id>"
+# Anything from the Vertex AI SDK
+service:simba-intelligence ("vertexai" OR "google.api_core.exceptions")
+
+# Just the 429 quota errors (most common Vertex AI error in our window)
+service:simba-intelligence "429 Resource exhausted"
+
+# Per tenant
+service:simba-intelligence "vertexai" "<vdd-tenant-uuid>"
 ```
 
-The query engine logs every topology (visualisation) with its ZEngine
-session, record counts (`block read in memory in 0 ms. row count = 307`),
-cache state, and any connector errors (`Internal server error, Failed to
-execute request, received an error from connector`). Visualisation `cid`
-values appear in `ErrorEvent: ErrorEvent(super=VisEvent(cid=<uuid>...))`.
+Prompt text, response text, and per-request token counts are **not
+logged**. For real cost/usage telemetry, look at the GCP billing
+console for project `agile-tracker-403309` (SA key at
+`~/si-trace-viewer/backend/gcp-sa.json`).
 
 ---
 

@@ -210,6 +210,23 @@ session UUID), the Composer / Discovery / SI / Symphony Managed API
 surfaces for tenant lookup, and the end-to-end recipe for joining a
 customer name to Datadog logs.
 
+For **tracing an NLQ end-to-end** (chat entry through Vertex AI through
+SQL execution), consult `references/query-tracing.md`. Covers the
+`POST /intelligence/api/v1/chat/stream` entry point, what the SI app
+actually logs (deliberately sparse, NL question never logged),
+zoomdata-query-engine and zoomdata-edc-<connector> patterns, Vertex AI
+quota errors, and the reconstruction recipe across services.
+
+For an **inventory of existing Datadog dashboards, monitors, synthetic
+tests, and saved views** relevant to SI, consult
+`references/datadog-assets.md`. Headline: very little SI-specific
+tooling exists today, so this doc doubles as a list of what to build.
+
+To **ship logs from a local kind cluster to Datadog** so local dev
+mirrors hosted observability, consult `references/datadog-agent-local.md`.
+Covers the Helm install, kind-specific TLS flag, facet-name mirroring,
+and cost safeguards.
+
 Quick triage:
 
 | Symptom | Most likely cause |
