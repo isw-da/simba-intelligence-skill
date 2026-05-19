@@ -11,6 +11,18 @@ SI Python app emits very little chat-specific output. Reconstructing a
 trace means correlating across services by timestamp, pod, tenant UUID,
 session ID, and visualisation/topology ID.
 
+## CRITICAL: this doc only covers SI v1
+
+There are two distinct SI deployments. Only **SI v1** (Composer-embedded,
+`/intelligence/playground`, nginx-fronted) is observable from Isw-Nonprod
+Datadog. **SI v2** (standalone, `/playground?sourceId=...`,
+gunicorn-direct, the current default UI) ships its logs somewhere else
+and cannot be traced from this Datadog org. Confirmed by firing a live
+query on 2026-05-19 and finding zero matches across the org.
+
+If you're tracing a query reported from SI v2, stop here and read the
+"SI v1 vs SI v2" section in `datadog-logs.md` first.
+
 ---
 
 ## The NLQ entry point

@@ -9,6 +9,40 @@ It does **not** cover SI Agent installation (the Datadog Agent isn't
 deployed alongside SI by default). Logs land in Datadog because the
 underlying Symphony / Discovery / Zoomdata stack already ships logs.
 
+## CRITICAL: SI v1 vs SI v2
+
+There are **two distinct Simba Intelligence deployments** on the same DNS
+host and only **one is observable from Isw-Nonprod Datadog**. This was
+confirmed by firing a live query on 2026-05-19 and finding zero matching
+logs across the entire org.
+
+| | SI v1 (Composer-embedded) | SI v2 (standalone) |
+|---|---|---|
+| URL pattern | `/intelligence/playground` | `/playground?sourceId=...` |
+| API paths | `/intelligence/api/v1/...` | `/api/v1/...` (no `intelligence` prefix) |
+| Front | nginx | gunicorn direct (no nginx) |
+| Pod prefix | `previewmain-simbaintelligence-*` | unknown |
+| Referer | `https://preview.logi-symphony.com/intelligence/playground` | `https://simba.logisymphony.com/playground` |
+| Logs in Isw-Nonprod? | **Yes**, on `service:simba-intelligence` | **No**, nowhere visible to Amin |
+| HTML build date | older | `last-modified: 2026-03-27` |
+| Top nav | (none, embedded in Composer) | Connections / Data Source Agent / Data Sources / Playground |
+
+This file documents **only SI v1**. If you're investigating an issue
+reported from a customer using SI v2 (the standalone UI), the trace
+cannot be reconstructed from Isw-Nonprod Datadog. Options:
+
+- Ask the SRE team where the standalone deployment ships logs (likely a
+  Datadog org you don't have access to, possibly a non-Datadog system,
+  possibly nowhere centralized).
+- Get `kubectl` access to whichever cluster runs the standalone gunicorn
+  pod and read logs directly from the pod.
+- Reproduce the issue against the Composer-embedded SI v1 instead if
+  it's still deployed.
+
+Amin is a member of only one Datadog org (Isw-Nonprod), confirmed via
+`/personal-settings/organizations`. Adding access to another org
+requires admin invitation.
+
 ---
 
 ## What's available, what isn't

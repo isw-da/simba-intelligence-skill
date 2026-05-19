@@ -6,6 +6,20 @@ named customer (e.g. Amplifin). Companion to `references/datadog-logs.md`.
 
 The work covers four API surfaces and three different identifier formats.
 
+## Scope note: SI v1 vs SI v2
+
+The Composer-side tenant lookup (the `/composer/api/accounts/<id>` pattern
+described below) applies to both SI v1 (Composer-embedded
+`/intelligence/playground`) and SI v2 (standalone `/playground`),
+because both rely on the same Symphony / Composer backend for
+authentication and tenant resolution. The screenshot proof of the
+Amplifin account ID `69fafe7ced27777725d94774` came from the Composer
+admin UI which is shared.
+
+The Datadog correlation patterns (mapping a tenant UUID to logs), however,
+only work for SI v1. SI v2 doesn't ship logs to Isw-Nonprod Datadog; see
+`datadog-logs.md` § SI v1 vs SI v2 for full context.
+
 ---
 
 ## Quick wins (no API calls needed)

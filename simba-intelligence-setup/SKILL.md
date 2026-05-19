@@ -203,6 +203,16 @@ trace pattern (`simba-intelligence` → Celery worker → `zoomdata-query-engine
 and Log Explorer / API templates. APM is not instrumented for SI; tracing
 is logs only.
 
+**Important: SI v1 vs SI v2.** Two SI deployments exist on the same DNS
+host. Only the older Composer-embedded **SI v1** (`/intelligence/playground`,
+nginx-fronted) is visible in Isw-Nonprod Datadog. The current standalone
+**SI v2** (`/playground?sourceId=...`, gunicorn-direct) ships logs
+somewhere else (likely a Datadog org Amin doesn't have access to, or
+nowhere centralized). When customers report issues from the standalone
+playground, the existing Datadog tooling cannot trace their queries.
+See `references/datadog-logs.md` § SI v1 vs SI v2 for the full
+distinction and workarounds.
+
 For **mapping a named customer to logs** (e.g. "show me everything
 Amplifin did today"), consult `references/tenant-discovery.md`. Covers
 the three identifier formats (Composer ObjectId, VDD UUID, Symphony
