@@ -1,19 +1,49 @@
 # Derived fields
 
-Pre-computed business metrics added as Postgres generated columns
-rather than synthesised by the LLM at query time.
+Pre-computed business metrics. Three viable paths, ranked by
+preference for a customer tenant.
 
-## Why generated columns, not SI derived fields
+## Path 1 (preferred, if customer permits): customer's data team adds them
 
-SI's own "Add Derived Field" UI surface exists but the API path
-returns 500 Internal Server Error on this build (May 2026). Postgres
-generated columns work today and are visible to SI as native fields
-when the source is rebuilt.
+The cleanest answer for a payments processor is to ask their data
+team to add the derived columns at source. They control their data;
+they should own its shape. Send them the SQL below and let them
+decide whether to add as views or generated columns.
 
-## What to add
+## Path 2: separate demo schema you control
 
-For a debit-order processor, add these six columns to the
-performance fact table:
+If touching customer tables is off the table but you can stand up a
+separate schema in their environment that pulls from theirs, do that.
+Add the derived columns there. SI points at the demo schema; the
+customer's tables are never touched.
+
+## Path 3: live without derived metrics
+
+If neither of the above is possible, accept that:
+- Ratios (success rate, failure rate) will be computed via rule-driven
+  SUM-numerator-over-SUM-denominator at NLQ time, not as fields
+- Net values (collection value, fee revenue) cannot be pre-computed;
+  ask for them with explicit subtraction in the question
+
+## Why not SI's own features?
+
+We investigated both. Neither works reliably on this SI build:
+
+- **Derived Field API**: returns HTTP 500 NullPointerException on
+  every attempted shape. Bug filed; see
+  `simba-intelligence-setup/references/audit-amplifin-bugs.md` #14.
+- **Custom SQL Entity**: structurally works but NLQ against it
+  returns aggressively sampled/filtered results (off by ~6000x on a
+  bare SUM in our test). Bug filed; see #15.
+
+Until either is fixed by SI product, derived fields must be solved
+at the data layer, not the platform layer.
+
+## What columns to add (when you can)
+
+For a debit-order processor, add these two columns to the
+performance fact table (rate columns deliberately omitted — they
+behave badly under SI's default SUM aggregation):
 
 ```sql
 ALTER TABLE schema.idm_branch_perf_v1

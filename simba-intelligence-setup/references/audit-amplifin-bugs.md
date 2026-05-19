@@ -44,6 +44,13 @@ Severity:
 
 ---
 
+## SI platform features (2 bugs)
+
+| # | Sev | Status | Description | Root cause | Fix | ETA |
+|---|---|---|---|---|---|---|
+| 14 | P1 | Open | Derived Field API rejects all attempted shapes. `POST /discovery/api/sources` with `nativeFields[].origin.type=DERIVED` and `derivedOrigin.expression="..."` returns HTTP 500 NullPointerException on `NativeOrigin.setDataEntityId`. Adding any other key (`dataEntityId`, `sourceFields`) returns HTTP 400 "Unrecognized field". | Only `expression` is in the validator allowlist, but supplying it alone hits a server-side null pointer dereference. | Workaround: skip derived fields; use rules to redirect ratio questions, accept that some derived metrics are out of scope. Real fix: SI product team. | depends on SI product |
+| 15 | P1 | Open | Custom SQL Entity (`type: CUSTOM_SQL`) accepts the source structurally but returns aggressively sampled or filtered results at NLQ time. Same underlying tables that produce `SUM(VAL_SUCCESS) = 10,833,290,438` via a single-collection source return `1,837,000` via a Custom SQL Entity. Off by ~6000x. | Unknown. Possibly an undocumented row limit on CUSTOM_SQL entities, or the auto-injected time filter interacting differently with the embedded SQL. | Workaround: use single-collection entities only; do not rely on CUSTOM_SQL for production numbers. Real fix: SI product team. | depends on SI product |
+
 ## Test design (1 bug)
 
 | # | Sev | Status | Description | Root cause | Fix | ETA |
