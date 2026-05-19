@@ -92,7 +92,7 @@ ALTER TABLE schema.fact_table
 
 then rebuild the source so SI re-discovers the column as ATTRIBUTE.
 
-### 4. `description` is not a writable property
+### 4. `description` is not a writable property — but `fieldMetadata` is
 
 Both entity-level (`dataEntities[i].description`) and field-level
 (`dataEntities[i].nativeFields[j].description`) are rejected at PUT:
@@ -102,12 +102,41 @@ Both entity-level (`dataEntities[i].description`) and field-level
 "Unrecognized field storage.dataEntities.null.nativeFields.null.description"
 ```
 
-The schema only accepts `label` and `visible` on fields, and only the
-top-level source `description`. There is no API path to set entity or
-field descriptions on this build of SI.
+However, the API does accept a separate `fieldMetadata` property on
+each native field. This is the "Field Metadata (new)" surface exposed
+in the UI as "up to 5 properties for optimal performance". Shape is a
+flat object of string keys to string values:
 
-**Fix**: encode meaning in entity `name` and field `label` instead.
-"Branch Performance" rather than "branch_perf_v1".
+```json
+{
+  "name": "trn_amt",
+  "label": "Fee Transaction Amount",
+  "fieldMetadata": {
+    "description": "Rand value of fee-bearing transactions at this branch",
+    "source": "Amplifin Fee Statistics"
+  }
+}
+```
+
+The LLM reads `fieldMetadata` when answering questions about that
+field. Empirically: it improves unknown-field handling (the LLM
+refuses to invent values for a field that doesn't exist), and helps
+disambiguate fields with similar labels across sources. It does
+**not** prevent the chat agent from picking a different source
+entirely when the question contains no source-scoping clue.
+
+**Practical guidance**:
+- Keep metadata declarative. "Rand value of successful collections" is
+  better than "summed by branch per month" because the latter steers
+  the LLM into a specific query shape.
+- One property is enough for most demos: `description`. The UI hint of
+  "5 for optimal performance" is upper bound, not target.
+- Avoid metadata that constrains grain ("per branch per month",
+  "grouped by stream"). It causes phrasing-sensitive regressions:
+  bare aggregate questions start returning empty.
+
+There is still no support for entity-level description; encode that in
+entity `name`.
 
 ### 5. Time bar setting has two distinct layers
 

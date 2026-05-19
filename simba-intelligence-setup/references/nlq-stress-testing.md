@@ -173,10 +173,17 @@ Q: What is the total Perf Customer Lifetime Value?
 truth: there is no such field
 ```
 
-In our run **SI returned "12,000,000"** for a field that does not
-exist. This is the worst failure mode. Always include this test in
-your suite; if it returns a number, the source is unsafe to demo
-without supervision.
+In our run, before field metadata was set, **SI returned "12,000,000"**
+for a field that does not exist. After applying `fieldMetadata` to
+each visible field (see `data-source-modelling.md` §4), the answer
+became "I couldn't find a data source directly related to..." which is
+safe.
+
+Caveat: the fix is not deterministic. A second variant
+(`"What is the Net Profit Margin?"`) still hallucinated `38.34%` on
+some runs. The metadata helps but does not eliminate the failure
+mode. Always include this test in your suite; if it returns a number
+on any run, the source is unsafe to demo without supervision.
 
 **E5. Determinism of NL answers — write down the seed**
 
