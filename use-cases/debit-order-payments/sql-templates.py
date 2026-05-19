@@ -192,6 +192,31 @@ def req(base, key, method, path, body=None):
         return e.code, e.read().decode()
 
 
+# Custom Metrics: ratios and derived calculations that the LLM can pick directly.
+# Reference fields from the all-time (`total_*`) entity to avoid auto-time-filter.
+# Expression syntax supports basic SQL aggregates; nullif is NOT supported, use CASE WHEN.
+CUSTOM_METRICS = [
+    {"name": "success_rate", "label": "Success Rate",
+     "expression": "sum(total_num_success) / (sum(total_num_success) + sum(total_num_fail))",
+     "dataType": "NUMBER"},
+    {"name": "failure_rate", "label": "Failure Rate",
+     "expression": "sum(total_num_fail) / (sum(total_num_success) + sum(total_num_fail))",
+     "dataType": "NUMBER"},
+    {"name": "cost_to_value_ratio_failure", "label": "Cost to Value Ratio on Failure",
+     "expression": "sum(total_cost_fail) / (case when sum(total_val_fail) = 0 then 1 else sum(total_val_fail) end)",
+     "dataType": "NUMBER"},
+    {"name": "cost_to_value_ratio_success", "label": "Cost to Value Ratio on Success",
+     "expression": "sum(total_cost_success) / (case when sum(total_val_success) = 0 then 1 else sum(total_val_success) end)",
+     "dataType": "NUMBER"},
+    {"name": "average_collection_value", "label": "Average Successful Collection Value",
+     "expression": "sum(total_val_success) / (case when sum(total_num_success) = 0 then 1 else sum(total_num_success) end)",
+     "dataType": "NUMBER"},
+    {"name": "total_collection_attempts", "label": "Total Collection Attempts",
+     "expression": "sum(total_num_success) + sum(total_num_fail)",
+     "dataType": "NUMBER"},
+]
+
+
 def build(base, key, conn, schema, name=None):
     """Build the full eight-entity Custom SQL source."""
     payload = {
@@ -283,6 +308,15 @@ def build(base, key, conn, schema, name=None):
     if gs and "timebar" in gs:
         gs["timebar"]["enabled"] = False
         req(base, key, "PUT", f"/discovery/api/sources/{sid}/global-settings", gs)
+
+    # Add custom metrics (the "derived field" equivalent)
+    for m in CUSTOM_METRICS:
+        code, body = req(base, key, "POST",
+                         f"/discovery/api/sources/{sid}/custom-metrics", m)
+        if code in (200, 201):
+            print(f"  metric: {m['name']}", file=sys.stderr)
+        else:
+            print(f"  metric FAIL {m['name']}: {code} {body}", file=sys.stderr)
 
     # Flush cache
     req(base, key, "DELETE", f"/discovery/api/sources/{sid}/cache")
