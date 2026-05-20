@@ -5,7 +5,7 @@ pattern and answers basic questions accurately. The hardened one is
 the production-grade source that survives hostile testing.
 
 Live demo source IDs (VDD tenant, 2026-05-20):
-- Simple: `6a0d4ffeed27777725d949e7`
+- Simple: `6a0d6b87ed27777725d949f5`
 - Hardened: `6a0c5d85ed27777725d949a0`
 
 A note that applies to both: SI's natural-language layer is
