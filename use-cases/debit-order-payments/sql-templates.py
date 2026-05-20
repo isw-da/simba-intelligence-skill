@@ -157,22 +157,58 @@ LABELS = {
     "total_trn_fee": "All-Time Fee Transaction Fee",
 }
 
+# Descriptions are the canonical ones from field-dictionary.md (the
+# salvaged semantic-layer-plan.md). Keep this map in sync with that
+# file; the dictionary is the source of truth, this is the applied form.
 META = {
+    # branch dimension
+    "branch_cd": "Primary identifier for a branch",
+    "bill_cd": "Distinct from Branch Code, used for billing routing",
+    "branch_name": "Full branch name for display",
+    "region": "Geographic region of the branch (e.g. WGauteng, KZN)",
+    "status": "Branch operational status (Active, Suspended, etc.)",
+    "branch_install_dt": "Date the branch was activated",
+    # legal entity dimension
+    "industry": "Primary industry classification of the legal entity behind the branch",
+    "legal_structure": "Legal structure (Pty Ltd, CC, Sole Prop, etc.)",
+    "reg_entity": "Registered legal entity name",
+    "trade_name": "Trading name",
+    # shared
+    "month_dt": "Calendar month for the fact row",
+    "fin_cd": "Finance/funder identifier (e.g. CAPITEC_SO, CAPITEC_TPPP)",
+    "pmt_stream": "Payment stream type (EFT, EFTS, EFTD, ACOL, SEFT)",
+    # perf fact (per-month)
+    "num_success": "Number of successful debit-order collections at this branch (per month)",
+    "num_fail": "Number of failed debit-order collections at this branch (per month)",
     "val_success": "Monetary value of successful debit-order collections at this branch (per month)",
     "val_fail": "Monetary value of failed debit-order collections at this branch (per month)",
+    "cost_success": "Internal cost to process a successful collection",
+    "cost_fail": "Internal cost to process a failed collection",
+    "fee_success": "Fee revenue on successful collections",
+    "fee_fail": "Fee revenue on failed collections",
+    "net_collection_value": "Net collection value (successful value minus failed value), per month",
+    "net_revenue_from_fees": "Net revenue from fees (fees minus costs), per month",
+    # perf fact (all-time)
+    "total_num_success": "Total successful collections across all months for this branch",
+    "total_num_fail": "Total failed collections across all months for this branch",
     "total_val_success": "Sum of all successful collection values across all months for this branch. Use this for all-time totals.",
     "total_val_fail": "Sum of all failed collection values across all months for this branch.",
+    "total_cost_success": "All-time internal cost on successful collections.",
+    "total_cost_fail": "All-time internal cost on failed collections.",
     "total_net_collection_value": "All-time net collection value (successes minus failures).",
     "total_net_revenue_from_fees": "All-time net revenue from fees (fees minus costs).",
-    "amt_due": "Monthly amount due to be collected from this branch",
+    # dues fact
+    "num_due": "Number of debit orders due to be collected from this branch (per month)",
+    "amt_due": "Total monetary amount due to be collected from this branch (per month)",
+    "total_num_due": "All-time total count of debit orders due for this branch",
     "total_amt_due": "All-time total amount due across all months for this branch",
-    "trn_fee": "Monthly fee revenue collected on transactions at this branch",
+    # fee fact
+    "trn_count": "Count of fee-bearing transactions at this branch (per month)",
+    "trn_amt": "Total transaction value at this branch (per month)",
+    "trn_fee": "Total fee revenue collected on transactions at this branch (per month)",
+    "total_trn_count": "All-time total transaction count for this branch",
+    "total_trn_amt": "All-time total transaction value for this branch",
     "total_trn_fee": "All-time total fee revenue at this branch",
-    "region": "Geographic region of the branch",
-    "industry": "Primary industry classification of the legal entity behind the branch",
-    "month_dt": "Calendar month for the fact row",
-    "fin_cd": "Finance / funder code (e.g. CAPITEC_SO, CAPITEC_TPPP)",
-    "pmt_stream": "Payment stream type (EFT, EFTS, EFTD, ACOL, SEFT)",
 }
 
 

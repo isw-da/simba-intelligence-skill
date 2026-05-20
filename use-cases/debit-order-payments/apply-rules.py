@@ -40,7 +40,9 @@ RULES = [
     ("no-dimension-value-hallucination",
      "When listing the distinct values present in a column or dimension (such as 'list all industries', 'what regions are in the data', 'what statuses exist'), only return values that actually appear in the data. Do NOT enumerate values from your general knowledge (such as common industry names like Ecommerce, Retail, SaaS, Healthcare). If the field has an allowed_values entry in its metadata, use only those values. If no metadata is available, run a SELECT DISTINCT query and return only what comes back."),
     ("prefer-custom-metrics",
-     "When a user asks for a metric that exists as a named Custom Metric on the data source, ALWAYS use the Custom Metric to answer. Do not recompute the same value from raw fields. The Custom Metrics include: Perf Success Rate, Perf Failure Rate, Perf Cost to Value Ratio on Failure, Perf Cost to Value Ratio on Success, Perf Average Successful Collection Value, Perf Total Collection Attempts."),
+     "When a user asks for a metric that exists as a named Custom Metric on the data source, ALWAYS use the Custom Metric to answer. Do not recompute the same value from raw fields. The Custom Metrics include: Perf Success Rate, Perf Failure Rate, Perf Cost to Value Ratio on Failure, Perf Cost to Value Ratio on Success, Perf Total Collection Attempts."),
+    ("clv-and-derived-explicit-refuse",
+     "Customer Lifetime Value (CLV), Customer Acquisition Cost (CAC), EBITDA, Net Profit Margin, Gross Margin, ARPU, and Churn Rate are NOT defined in this data source and must NOT be approximated from any other field or metric (including average collection value). If asked for any of these, respond exactly: 'That metric is not defined in this data source.' Do not substitute a similarly-themed metric."),
 ]
 
 def post(base, key, body):
