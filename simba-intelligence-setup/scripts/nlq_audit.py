@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cell-level audit script for the Amplifin SI demo source.
+Cell-level audit script for the the customer SI demo source.
 
 Randomly samples N source rows from Postgres, asks SI an equivalent
 NLQ question for each, and compares the answers within tolerance.
@@ -26,14 +26,14 @@ Usage:
 import json, os, random, re, subprocess, sys, time, urllib.request, urllib.error
 from datetime import datetime
 
-PG_HOST = os.environ.get("PG_HOST", "aws-1-eu-west-2.pooler.supabase.com")
+PG_HOST = os.environ.get("PG_HOST", "<db-host>")
 PG_PORT = os.environ.get("PG_PORT", "5432")
-PG_USER = os.environ.get("PG_USER", "postgres.cqkemdwjcuhiraiqxpzf")
+PG_USER = os.environ.get("PG_USER", "<db-user>")
 PG_PASSWORD = os.environ.get("PG_PASSWORD", "")
 PG_DB = os.environ.get("PG_DB", "postgres")
-PG_SCHEMA = os.environ.get("PG_SCHEMA", "amplifin_demo")
+PG_SCHEMA = os.environ.get("PG_SCHEMA", "demo")
 
-SI_BASE = os.environ.get("SI_BASE", "https://simba.logisymphony.com")
+SI_BASE = os.environ.get("SI_BASE", "https://<si-host>")
 SI_KEY = os.environ.get("SI_KEY", "")
 
 SRC_PERF = os.environ.get("SRC_PERF", "")

@@ -22,7 +22,7 @@ logs across the entire org.
 | API paths | `/intelligence/api/v1/...` | `/api/v1/...` (no `intelligence` prefix) |
 | Front | nginx | gunicorn direct (no nginx) |
 | Pod prefix | `previewmain-simbaintelligence-*` | unknown |
-| Referer | `https://preview.logi-symphony.com/intelligence/playground` | `https://simba.logisymphony.com/playground` |
+| Referer | `https://preview.logi-symphony.com/intelligence/playground` | `https://<si-host>/playground` |
 | Logs in Isw-Nonprod? | **Yes**, on `service:simba-intelligence` | **No**, nowhere visible to Amin |
 | HTML build date | older | `last-modified: 2026-03-27` |
 | Top nav | (none, embedded in Composer) | Connections / Data Source Agent / Data Sources / Playground |
@@ -66,7 +66,7 @@ Not available:
 - **No extracted attributes** on `simba-intelligence` message bodies. You
   can search for a tenant UUID as a string but you can't click-filter on
   `tenant_id` as a facet.
-- **No tenant-name search.** Tenants appear as UUIDs only. "Amplifin"
+- **No tenant-name search.** Tenants appear as UUIDs only. "the customer"
   returns zero hits.
 - **isw.logisymphony.com is not in this Datadog org** (it's on GCP, not
   AWS, and not reporting to Isw-Nonprod). Check the prod org or GCP Cloud
@@ -81,8 +81,8 @@ cross-referencing the cluster's `aws_account` and AZ in log metadata.
 
 | Public URL | DNS target | Cluster (`kube_cluster_name`) | Pod prefix | AWS account | Region |
 |---|---|---|---|---|---|
-| `simba.logisymphony.com` | `k8s-simba-simbasim-218e14a15a-*.us-east-2.elb.amazonaws.com` | `preview-eks-cluster` | `previewmain-simbaintelligence-*` | 151662208362 | us-east-2 |
-| `simbaintel.logianalytics.com` | `a91867f3b2b1447abbafea4b4308bd1e-*.us-east-1.elb.amazonaws.com` | `qa2-eks-cluster` | `si2-simba-intelligence-chart-*` | 731970931268 | us-east-1 |
+| `<si-host>` | `k8s-simba-simbasim-218e14a15a-*.us-east-2.elb.amazonaws.com` | `preview-eks-cluster` | `previewmain-simbaintelligence-*` | 151662208362 | us-east-2 |
+| `simbaintel.logianalytics.com` | `<id>4308bd1e-*.us-east-1.elb.amazonaws.com` | `qa2-eks-cluster` | `si2-simba-intelligence-chart-*` | 731970931268 | us-east-1 |
 | `isw.logisymphony.com` | `34.54.16.145` (GCP, `via: 1.1 google`) | not in Isw-Nonprod | n/a | n/a | GCP |
 
 Notes:
@@ -116,7 +116,7 @@ Top SI-related `service` values in Isw-Nonprod:
 ## Filtering by tenant
 
 For the full story on identifier formats, API endpoints, and the
-Amplifin example, see `references/tenant-discovery.md`. Short version:
+the customer example, see `references/tenant-discovery.md`. Short version:
 
 The same logical tenant has **three different IDs** in different layers.
 The one that appears in Datadog SI logs is the VDD tenant UUID:
@@ -128,7 +128,7 @@ as fallback for tenant e2a11f69-d23d-4ef5-b432-1d85089cf56f
 
 | Layer | Format | Example |
 |---|---|---|
-| Composer admin (what you see in the URL) | 24-char hex ObjectId | `69fafe7ced27777725d94774` |
+| Composer admin (what you see in the URL) | 24-char hex ObjectId | `<account-id>` |
 | VDD / SI logs (what appears in Datadog) | 36-char UUID | `e2a11f69-d23d-4ef5-b432-1d85089cf56f` |
 | Symphony session | 36-char UUID | `d7cf37cf-789a-49a6-b917-56fc5819530b` |
 
@@ -296,9 +296,9 @@ ad-hoc queries but watch out for batch backfills.
 
 ## Known gotchas
 
-- **`*amplifin*` will not match anything.** Tenant names aren't logged.
+- **`*the customer*` will not match anything.** Tenant names aren't logged.
   Use the VDD tenant UUID (see `tenant-discovery.md`).
-- **Searching the public URL won't work.** `simba.logisymphony.com` is a
+- **Searching the public URL won't work.** `<si-host>` is a
   DNS alias for the AWS ELB; the Referer header on access logs shows the
   internal frontend (`preview.logi-symphony.com`). Filter by
   `kube_cluster_name` instead.

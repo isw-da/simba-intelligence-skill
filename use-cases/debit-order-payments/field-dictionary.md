@@ -1,11 +1,11 @@
-# Semantic layer plan: Amplifin Branch Performance source
+# Semantic layer plan: the customer Branch Performance source
 
 Apply these renames, descriptions and hide flags to each table's `nativeFields` when building the data source. Default rule for any field not listed: convert SNAKE_CASE to Title Case for the label, leave description blank, leave visible=true.
 
 ## Source-level
 
-- **Name**: `Amplifin Branch Performance (VDD demo)`
-- **Description**: "Demo data source over a local sample of Amplifin's debit-order data, for building and testing the semantic layer before porting to the Amplifin tenant."
+- **Name**: `the customer Branch Performance (VDD demo)`
+- **Description**: "Demo data source over a local sample of the customer's debit-order data, for building and testing the semantic layer before porting to the the customer tenant."
 
 ## Table 1: `branch` → data entity label "Branches"
 
@@ -31,7 +31,7 @@ Entity description: "Merchant branches with status, region, and operational conf
 | COMM_PROF | Commission Profile | | true |
 | NLR_ENABLED | NLR Enabled | National Loan Register flag (confirm) | true |
 | ILR_ENABLED | ILR Enabled | Confirm meaning with customer | true |
-| INFUSSION_ENABLED | Infusion Enabled | Amplifin product feature flag (confirm) | true |
+| INFUSSION_ENABLED | Infusion Enabled | the customer product feature flag (confirm) | true |
 | PAY_AWAY_START_EXTRACT | | Internal extract timestamp | **false** |
 | PAY_AWAY_EXTRACT | | Internal extract timestamp | **false** |
 | FEATURES | | Blob field, noisy | **false** |

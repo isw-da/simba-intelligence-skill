@@ -89,19 +89,19 @@ When a question asks about success rate, failure rate, cost ratios, net collecti
 ### perf-fields-only (apply to the Branch Performance source)
 
 ```
-When answering against this source (Branch Performance), use only fields prefixed "Perf" plus branch dimension fields. Do not pull metrics from Monthly Dues or Fee Statistics. If asked about a due amount or transaction fee, respond that it lives in a different Amplifin source.
+When answering against this source (Branch Performance), use only fields prefixed "Perf" plus branch dimension fields. Do not pull metrics from Monthly Dues or Fee Statistics. If asked about a due amount or transaction fee, respond that it lives in a different the customer source.
 ```
 
 ### due-fields-only (apply to the Monthly Dues source)
 
 ```
-When answering against this source (Monthly Dues), use only AMT_DUE and NUM_DUE plus dimension fields. Do not pull metrics from Branch Performance or Fee Statistics. If asked about a successful value or transaction fee, respond that it lives in a different Amplifin source.
+When answering against this source (Monthly Dues), use only AMT_DUE and NUM_DUE plus dimension fields. Do not pull metrics from Branch Performance or Fee Statistics. If asked about a successful value or transaction fee, respond that it lives in a different the customer source.
 ```
 
 ### fee-fields-only (apply to the Fee Statistics source)
 
 ```
-When answering against this source (Fee Statistics), use only TRN_AMT, TRN_COUNT, TRN_FEE plus dimension fields. Do not pull metrics from Branch Performance or Monthly Dues. If asked about a successful value or amount due, respond that it lives in a different Amplifin source.
+When answering against this source (Fee Statistics), use only TRN_AMT, TRN_COUNT, TRN_FEE plus dimension fields. Do not pull metrics from Branch Performance or Monthly Dues. If asked about a successful value or amount due, respond that it lives in a different the customer source.
 ```
 
 ## How to apply

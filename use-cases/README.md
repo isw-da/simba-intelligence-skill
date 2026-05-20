@@ -19,7 +19,7 @@ the template, swap names, and have a working demo in an hour.
 
 | Folder | Domain | Built from |
 |---|---|---|
-| `debit-order-payments/` | Payments processor handling debit-order collections on behalf of lenders / merchants | Amplifin (May 2026) |
+| `debit-order-payments/` | Payments processor handling debit-order collections on behalf of lenders / merchants | the customer (May 2026) |
 
 ## How to use a use case
 

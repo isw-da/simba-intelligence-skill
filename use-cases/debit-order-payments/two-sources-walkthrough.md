@@ -5,8 +5,8 @@ pattern and answers basic questions accurately. The hardened one is
 the production-grade source that survives hostile testing.
 
 Live demo source IDs (VDD tenant, 2026-05-20):
-- Simple: `6a0d6b87ed27777725d949f5`
-- Hardened: `6a0c5d85ed27777725d949a0`
+- Simple: `<id>`
+- Hardened: `<id>`
 
 A note that applies to both: SI's natural-language layer is
 phrasing-sensitive. The source design below removes whole *classes*
@@ -53,8 +53,8 @@ thing they learn to add (see Source 2).
      SUM(COALESCE(p."NUM_FAIL",0))    AS num_fail,
      SUM(COALESCE(p."VAL_SUCCESS",0)) AS successful_value,
      SUM(COALESCE(p."VAL_FAIL",0))    AS failed_value
-   FROM amplifin_demo.branch b
-   LEFT JOIN amplifin_demo.idm_branch_perf_v1 p
+   FROM demo.branch b
+   LEFT JOIN demo.idm_branch_perf_v1 p
      ON p."BRANCH_CD"::text = b."BRANCH_CD"
    GROUP BY b."BRANCH_CD", b."REGION", b."STATUS"
    ```
@@ -76,7 +76,7 @@ thing they learn to add (see Source 2).
 | Top 5 regions by Total Successful Value | Free State 5.7B, ECape 1.4B, WCape 779M, Mpumalanga 337M, KZN West 254M | The all-time entity already summed each branch's value, so grouping by region is a simple second sum. Pre-aggregating in the Custom SQL removes any join fan-out. |
 | What is the Success Rate? | 0.8358 | It's a Custom Metric with an explicit formula. The AI picks the named metric instead of trying to invent a success-rate calculation, so the denominator is always right. |
 | What is the Failure Rate? | 0.1642 | Same: a defined metric, not a synthesised one. |
-| What is the sum of the Total Successful Value field? | 10,833,290,438 | Phrase grand totals as "sum of the X field". Because the entity has no date column, the AI cannot apply its default last-month filter, so the sum covers all data. |
+| What is the sum of the Total Successful Value field? | <value> | Phrase grand totals as "sum of the X field". Because the entity has no date column, the AI cannot apply its default last-month filter, so the sum covers all data. |
 
 **Phrasing note for the simple source**: "what is the total
 successful value" sometimes returns "not available" (an LLM
@@ -137,7 +137,7 @@ at the top of `sql-templates.py`.
 | Question | Answer | Why it holds up |
 |---|---|---|
 | How many branches are there? | 1000 | Clean dimension count. |
-| What is the total val_success across all branches? | 10,833,290,438 | The all-time entity has no date column, so the auto-time-filter can't restrict it. "Across all branches" steers the AI to that entity rather than the monthly one. |
+| What is the total val_success across all branches? | <value> | The all-time entity has no date column, so the auto-time-filter can't restrict it. "Across all branches" steers the AI to that entity rather than the monthly one. |
 | Total amt_due across all branches | 20,979,420,601 | Same all-time pattern, dues fact. |
 | Total trn_fee across all branches | 349,932 | Same all-time pattern, fee fact. |
 | Top 5 regions by total_val_success | Free State 5.7B etc. | Pre-aggregated all-time entity joined to the branch dimension. No fan-out because each branch appears once. |

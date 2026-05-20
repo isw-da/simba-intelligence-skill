@@ -1,6 +1,6 @@
 # Data source modelling and known issues
 
-Field-tested learnings from building Amplifin's demo source (May 2026). Covers
+Field-tested learnings from building the customer's demo source (May 2026). Covers
 the SI Discovery API for sources, semantic-layer behaviour, join validation,
 chat-agent quirks, and how to recover when things go wrong. Companion to
 `troubleshooting.md` which covers cluster-level issues; this one covers the
@@ -113,7 +113,7 @@ flat object of string keys to string values:
   "label": "Fee Transaction Amount",
   "fieldMetadata": {
     "description": "Rand value of fee-bearing transactions at this branch",
-    "source": "Amplifin Fee Statistics"
+    "source": "the customer Fee Statistics"
   }
 }
 ```
@@ -253,7 +253,7 @@ This is the pattern that produced exact-match NLQ answers for us:
 import json, urllib.request
 
 KEY = "<your-api-key>"
-BASE = "https://simba.logisymphony.com"
+BASE = "https://<si-host>"
 CONN = "<connection-id>"
 SCHEMA = "<schema-name>"
 CT = "application/vnd.composer.v3+json"
@@ -423,7 +423,7 @@ all-time.
 Both entities join to the dim hub by `branch_cd`. The LLM picks
 between them based on the question's grain.
 
-This pattern brought Amplifin NLQ pass rate from 47% (single entity
+This pattern brought the customer NLQ pass rate from 47% (single entity
 with time field) to 92% (eight-entity split) on the first run, with
 no underlying data changes.
 

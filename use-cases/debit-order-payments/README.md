@@ -6,7 +6,7 @@ against the customer's bank account on a schedule, charges fees on
 each attempt, and reports performance to the underlying lender or
 merchant ("branch" in the data model).
 
-Built and field-tested against the Amplifin Branch Performance source
+Built and field-tested against the the customer Branch Performance source
 (May 2026). Should fit any business with the same operating model:
 debit-order origination, collection attempt, success/failure/dispute
 tracking, fee revenue per attempt.
@@ -38,7 +38,7 @@ Payments processors with the following operating model:
 - There's a separate dim for legal entity / regulatory info per
   branch.
 
-Examples: Amplifin (South Africa), DebiCheck operators, US ACH
+Examples: the customer (South Africa), DebiCheck operators, US ACH
 processors handling pre-authorised debits, UK Direct Debit bureaux.
 
 ## Who this does NOT fit

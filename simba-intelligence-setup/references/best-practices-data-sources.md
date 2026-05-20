@@ -2,7 +2,7 @@
 
 How to set up a Simba Intelligence data source that holds up under
 hostile testing, and how to phrase questions so the chat agent
-behaves predictably. Field-tested on the Amplifin May 2026 build.
+behaves predictably. Field-tested on the the customer May 2026 build.
 
 Companion to `data-source-modelling.md` (mechanics) and
 `nlq-stress-testing.md` (verification methodology). This one is the

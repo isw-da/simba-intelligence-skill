@@ -9,7 +9,7 @@ Each question is annotated with:
 - **expected shape**: what the answer should look like
 - **status**: ✅ tested working, ⚠️ phrasing-sensitive, ❌ known to fail without product fix
 
-Replace `Amplifin` / column names with the prospect's own where needed.
+Replace `the customer` / column names with the prospect's own where needed.
 
 ---
 

@@ -31,7 +31,7 @@ We investigated both. Neither works reliably on this SI build:
 
 - **Derived Field API**: returns HTTP 500 NullPointerException on
   every attempted shape. Bug filed; see
-  `simba-intelligence-setup/references/audit-amplifin-bugs.md` #14.
+  `simba-intelligence-setup/references/audit-the customer-bugs.md` #14.
 - **Custom SQL Entity**: structurally works but NLQ against it
   returns aggressively sampled/filtered results (off by ~6000x on a
   bare SUM in our test). Bug filed; see #15.

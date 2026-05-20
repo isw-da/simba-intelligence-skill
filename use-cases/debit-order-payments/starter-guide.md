@@ -46,7 +46,7 @@ underlying tables.
 
 ### Totals (uses the All-Time entity)
 
-- What is the **All-Time Successful Value across all branches**? (this exact phrasing returns R10,833,290,438 ✓)
+- What is the **All-Time Successful Value across all branches**? (this exact phrasing returns R<value> ✓)
 - What is the All-Time Failed Value across all branches?
 - What is the All-Time Successful Count across all branches?
 - What is the All-Time Failed Count across all branches?
@@ -88,7 +88,7 @@ entity.
 ## Questions to avoid (or rephrase before asking)
 
 These have known reliability issues. The reasons are documented in
-`audit-amplifin-qa-results-v3.md`.
+`audit-the customer-qa-results-v3.md`.
 
 | Don't ask | Why | Rephrase as |
 |---|---|---|
@@ -119,8 +119,8 @@ SELECT
   COALESCE(d."AMT_DUE", 0) AS amt_due,
   COALESCE(d."NUM_DUE", 0) AS num_due,
   d."FIN_CD" AS fin_cd
-FROM amplifin.branch b
-LEFT JOIN amplifin.idm_monthly_due_v2 d
+FROM the customer.branch b
+LEFT JOIN the customer.idm_monthly_due_v2 d
   ON d."BRANCH_CD"::text = b."BRANCH_CD"
 WHERE d."MONTH_DT" IS NOT NULL
 ```
@@ -131,8 +131,8 @@ SELECT
   b."BRANCH_CD"::text AS branch_cd,
   SUM(COALESCE(d."AMT_DUE", 0)) AS total_amt_due,
   SUM(COALESCE(d."NUM_DUE", 0)) AS total_num_due
-FROM amplifin.branch b
-LEFT JOIN amplifin.idm_monthly_due_v2 d
+FROM the customer.branch b
+LEFT JOIN the customer.idm_monthly_due_v2 d
   ON d."BRANCH_CD"::text = b."BRANCH_CD"
 GROUP BY b."BRANCH_CD"
 ```
@@ -152,7 +152,7 @@ for legal entity:
 SELECT DISTINCT ON ("BRANCH_CD"::text)
   "BRANCH_CD"::text AS branch_cd,
   "INDUSTRY", "LEGAL_STRUCTURE"
-FROM amplifin.branch_legal_entity
+FROM the customer.branch_legal_entity
 ```
 
 `DISTINCT ON` is important: if a branch has two legal-entity rows,
@@ -261,7 +261,7 @@ When a question misses:
 
 The starter is for learning and tinkering. When you're ready to
 demo to a stakeholder or build a dashboard, switch to the production
-source ("Amplifin Operations" — eight entities, six metrics, all
+source ("the customer Operations" — eight entities, six metrics, all
 three fact tables covered).
 
 The starter source can stay in your tenant indefinitely. It costs

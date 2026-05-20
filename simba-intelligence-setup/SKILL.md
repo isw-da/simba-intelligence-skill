@@ -196,7 +196,7 @@ After SI is deployed and accessible, the configuration sequence is always:
 For any issue after deployment, consult `references/troubleshooting.md`.
 
 For **hosted SI environments** (trials, demos, customer-facing
-`simba.logisymphony.com` / `simbaintel.logianalytics.com`), logs live in
+`<si-host>` / `simbaintel.logianalytics.com`), logs live in
 Datadog's `Isw-Nonprod` org. Consult `references/datadog-logs.md` for the
 URL → cluster mapping, tenant UUID filtering, the three-stream query
 trace pattern (`simba-intelligence` → Celery worker → `zoomdata-query-engine`),
@@ -214,7 +214,7 @@ See `references/datadog-logs.md` § SI v1 vs SI v2 for the full
 distinction and workarounds.
 
 For **mapping a named customer to logs** (e.g. "show me everything
-Amplifin did today"), consult `references/tenant-discovery.md`. Covers
+the customer did today"), consult `references/tenant-discovery.md`. Covers
 the three identifier formats (Composer ObjectId, VDD UUID, Symphony
 session UUID), the Composer / Discovery / SI / Symphony Managed API
 surfaces for tenant lookup, and the end-to-end recipe for joining a

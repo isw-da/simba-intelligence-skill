@@ -5,7 +5,7 @@ without touching the underlying data. Critical for customer tenants
 where the data is owned by the customer's data team and you cannot
 ALTER, UPDATE, or DELETE.
 
-Tested 2026-05-19 on the SI build hosted at simba.logisymphony.com.
+Tested 2026-05-19 on the SI build hosted at <si-host>.
 Results are specific to that build and may change in future versions.
 
 ---
@@ -49,7 +49,7 @@ are detected as NUMBER with `defaultMetric: SUM`.
 **heavily filtered or sampled** in ways the platform doesn't
 document. A Custom SQL Entity sourced from the same underlying tables
 as a working single-collection source returned 1,837,000 for a
-`SUM(VAL_SUCCESS)` whose truth is 10,833,290,438 — off by a factor of
+`SUM(VAL_SUCCESS)` whose truth is <value> — off by a factor of
 ~6000. Distinct counts came back as 2 when the truth was 1000.
 
 We could not determine whether this is:
@@ -125,7 +125,7 @@ For each of those, the only platform-only options are:
 
 ## Recommended approach for customer tenants
 
-For Amplifin or any tenant where you cannot touch data:
+For the customer or any tenant where you cannot touch data:
 
 ### Phase 1: Data hygiene as a customer ask
 
@@ -215,5 +215,5 @@ data-side changes. They just won't fix structural data problems.
 - `data-source-modelling.md` — recipe for single-collection sources
 - `nlq-stress-testing.md` — the 25-test audit methodology
 - `best-practices-data-sources.md` — prompting and setup guidance
-- `audit-amplifin-bugs.md` — bug log including the Custom SQL and
+- `audit-the customer-bugs.md` — bug log including the Custom SQL and
   Derived Field issues

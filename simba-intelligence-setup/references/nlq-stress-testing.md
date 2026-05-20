@@ -27,8 +27,8 @@ the truth. SQL is the canonical channel:
 ```bash
 PGPASSWORD='...' psql -h host -p port -U user -d db -c "
   SELECT b.\"REGION\", SUM(p.\"VAL_SUCCESS\")::bigint
-  FROM amplifin_demo.branch b
-  JOIN amplifin_demo.idm_branch_perf_v1 p ON b.\"BRANCH_CD\"=p.\"BRANCH_CD\"
+  FROM demo.branch b
+  JOIN demo.idm_branch_perf_v1 p ON b.\"BRANCH_CD\"=p.\"BRANCH_CD\"
   GROUP BY 1 ORDER BY 2 DESC LIMIT 5;
 "
 ```
@@ -96,7 +96,7 @@ Q: Which month had the highest {Prefix} {Metric}?
 truth: SELECT month_dt, SUM(metric) GROUP BY 1 ORDER BY 2 DESC LIMIT 1;
 ```
 
-For our Amplifin source, B1 returned the exact May value, B2 returned
+For our the customer source, B1 returned the exact May value, B2 returned
 exact pairs, but B3 returned the correct month with a value 5.9% off.
 The auto-injected time filter sometimes truncates the underlying
 window for the "winner" calculation.
@@ -277,7 +277,7 @@ question.
 
 ---
 
-## What we saw on the Amplifin demo source
+## What we saw on the the customer demo source
 
 Run on 2026-05-19 against the three single-fact sources
 (Branch Performance, Monthly Dues, Fee Statistics):
@@ -310,7 +310,7 @@ it as a CI check before any demo.
 import json, urllib.request, re
 
 KEY = "..."
-BASE = "https://simba.logisymphony.com"
+BASE = "https://<si-host>"
 SOURCES = {"Perf": "...", "Due": "...", "Fee": "..."}
 
 def ask(q, sid):

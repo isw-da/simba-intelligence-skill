@@ -2,7 +2,7 @@
 
 Use this reference when you need to know which tenant (account) a Symphony /
 SI session belongs to, or when you need to map a Datadog log entry back to a
-named customer (e.g. Amplifin). Companion to `references/datadog-logs.md`.
+named customer (e.g. the customer). Companion to `references/datadog-logs.md`.
 
 The work covers four API surfaces and three different identifier formats.
 
@@ -13,7 +13,7 @@ described below) applies to both SI v1 (Composer-embedded
 `/intelligence/playground`) and SI v2 (standalone `/playground`),
 because both rely on the same Symphony / Composer backend for
 authentication and tenant resolution. The screenshot proof of the
-Amplifin account ID `69fafe7ced27777725d94774` came from the Composer
+the customer account ID `<account-id>` came from the Composer
 admin UI which is shared.
 
 The Datadog correlation patterns (mapping a tenant UUID to logs), however,
@@ -28,7 +28,7 @@ If you're already logged into a Composer admin URL, the tenant ID is in
 the URL hash. Open the tenant you care about, look at the address bar:
 
 ```
-https://simba.logisymphony.com/composer/admin.html#accounts/69fafe7ced27777725d94774
+https://<si-host>/composer/admin.html#accounts/<account-id>
                                                             ^^^^^^^^^^^^^^^^^^^^^^^^
                                                             account / tenant ID
 ```
@@ -40,7 +40,7 @@ For Amin's environments captured 2026-05-18:
 
 | Tenant | Environment | Account ID |
 |---|---|---|
-| Amplifin | `simba.logisymphony.com` (preview-eks) | `69fafe7ced27777725d94774` |
+| the customer | `<si-host>` (preview-eks) | `<account-id>` |
 
 (Add others as they're discovered.)
 
@@ -53,7 +53,7 @@ same tenant", living in different layers. They are not interchangeable.
 
 | Identifier | Format | Where it lives | Example |
 |---|---|---|---|
-| Composer account ID | 24-char hex (MongoDB ObjectId) | Composer admin URL, `/composer/api/accounts` | `69fafe7ced27777725d94774` |
+| Composer account ID | 24-char hex (MongoDB ObjectId) | Composer admin URL, `/composer/api/accounts` | `<account-id>` |
 | VDD tenant ID | 36-char UUID | SI / VDD logs, LLM capability fallback messages | `e2a11f69-d23d-4ef5-b432-1d85089cf56f` |
 | Symphony session ID | 36-char UUID | Composer auth flow, `Set-Cookie`, 410 Gone errors | `d7cf37cf-789a-49a6-b917-56fc5819530b` |
 
@@ -90,7 +90,7 @@ The lazy way: copy as cURL from Chrome dev tools (right-click any request
 → Copy → Copy as cURL). The cleaner way:
 
 ```bash
-# In a logged-in browser tab on simba.logisymphony.com, run in dev tools console:
+# In a logged-in browser tab on <si-host>, run in dev tools console:
 copy(document.cookie)
 # Now paste into shell:
 export SIMBA_COOKIE='<pasted cookie string>'
@@ -106,7 +106,7 @@ export SIMBA_CSRF='9HoJUtAfAEidj7WA5rOQRn2q...'
 ### List all accounts (tenants)
 
 ```bash
-curl -s "https://simba.logisymphony.com/composer/api/accounts" \
+curl -s "https://<si-host>/composer/api/accounts" \
   -H "Accept: application/vnd.composer.v3+json" \
   -H "x-csrf-token: $SIMBA_CSRF" \
   -H "x-www-authenticate: true" \
@@ -120,7 +120,7 @@ display name, and probably enabled/disabled state. Captured payload was
 ### Get a single tenant
 
 ```bash
-curl -s "https://simba.logisymphony.com/composer/api/accounts/69fafe7ced27777725d94774" \
+curl -s "https://<si-host>/composer/api/accounts/<account-id>" \
   -H "Accept: application/vnd.composer.v3+json" \
   -H "x-csrf-token: $SIMBA_CSRF" \
   -H "x-www-authenticate: true" \
@@ -174,7 +174,7 @@ The endpoint that errored in our earlier 410 Gone log. Use to map an
 active session ID to its owning tenant.
 
 ```bash
-curl -s "https://simba.logisymphony.com/managed/api/Session/GetSession/?sessionId=<session-uuid>" \
+curl -s "https://<si-host>/managed/api/Session/GetSession/?sessionId=<session-uuid>" \
   -b "$SIMBA_COOKIE" | jq
 ```
 
@@ -217,13 +217,13 @@ a substring query. See `datadog-logs.md` § Filtering by tenant.
 
 ---
 
-## Tying it together: from Amplifin to Datadog logs
+## Tying it together: from the customer to Datadog logs
 
-The end-to-end recipe for "show me everything Amplifin did today":
+The end-to-end recipe for "show me everything the customer did today":
 
 1. **Get the Composer account ID.** Open the Composer admin, navigate to
-   the tenant, copy the hex from the URL hash. For Amplifin:
-   `69fafe7ced27777725d94774`.
+   the tenant, copy the hex from the URL hash. For the customer:
+   `<account-id>`.
 2. **Get the VDD tenant UUID.** Either ask DevOps for the mapping, or
    make one query as a user belonging to that tenant, then grep Datadog:
    ```

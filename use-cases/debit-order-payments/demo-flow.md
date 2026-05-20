@@ -46,7 +46,7 @@ no silent dropping of dimension values. Auditors care about this."
 
 **Source**: Branch Performance
 **Question**: Total Perf Successful Value across all months
-**Expected**: "R10,833,290,438.00"
+**Expected**: "R<value>.00"
 **Narrative**: "That's your gross successful collection value over
 the trailing 12 months. Rand prefix because we set tenant-wide
 currency rules — works for any operator running in their local
@@ -58,7 +58,7 @@ currency."
 
 **Source**: Branch Performance
 **Question**: Top 5 regions by Perf Successful Value
-**Expected**: Free State 5,737,288,980; ECape 1,368,984,079; etc.
+**Expected**: Free State <value>; ECape 1,368,984,079; etc.
 **Narrative**: "Free State carries half your collections. Worth a
 conversation about why."
 
