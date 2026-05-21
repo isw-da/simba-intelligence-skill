@@ -343,7 +343,7 @@ assert_contains(ask("How many branches are there?", SOURCES["Perf"]),
                 1000, "A1 row count")
 assert_contains(ask("Total Perf Successful Value across all months",
                     SOURCES["Perf"]),
-                10833290438, "A2 perf total")
+                <expected_total>, "A2 perf total")
 # ... etc per test class
 ```
 
