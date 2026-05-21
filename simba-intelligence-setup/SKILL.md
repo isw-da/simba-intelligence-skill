@@ -188,6 +188,11 @@ After SI is deployed and accessible, the configuration sequence is always:
 5. **Create data connection** — `references/post-install.md` § Data Connections
 4. **Create data source** — `references/post-install.md` § Data Source Agent
 5. **Query in Playground** — `references/post-install.md` § Playground
+6. **(Optional) Embed the chatbot in a host app** via
+   `references/chatbot-embed.md`. Productionise NLQ once the source is
+   built and stress-tested; covers the embeddable SI v1 chatbot
+   (`createComponent('chat-bot')`), the governance you inherit from the
+   source, and the loading gotchas.
 
 ---
 
