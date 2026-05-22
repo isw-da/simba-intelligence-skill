@@ -359,3 +359,37 @@ Treat any FAIL as a demo blocker, not a known-issue.
   itself errors
 - `query-tracing.md` — reconstructing what the LLM and the query
   engine actually did in production logs
+
+---
+
+## Field findings (competitive PoV, anonymised)
+
+Methodology that worked, beyond the A1-A4 anchors:
+- **Gates-first audit**: score the customer's absolute pass/fail gates
+  separately from the weighted classes. Simple-lookup >=90% and
+  no-hallucination are the ones modelling can move; access/POPIA/export are
+  config and must be verified, not assumed.
+- **Hostile (paraphrase) audit**: probe each question CLASS with several natural
+  rewordings; only call it robust if every wording lands. Totals/ratios via
+  metrics were robust; synonyms ("active" vs "ENABLED"), year-on-year, set logic
+  and counts were brittle until restructured.
+- **Grain-shift audit**: throw questions at grains you did NOT pre-build, for an
+  honest coverage number on the unanticipated tail (where one-shot is "luck").
+- **One-shot vs best-of-N**: run each question N times and majority-vote. A large
+  share of "failures" are host SSE drops (503 / IncompleteRead) or one-off
+  variance that voting/retry removes; what remains are deterministic agent errors
+  that voting cannot fix and that need restructuring or a stronger model.
+
+Key results / cautions:
+- Non-determinism persists on a high-quality model (gemini-2.5-flash); it is
+  intrinsic to one-shot generation, not a cheap-model artefact. A Claude/GPT
+  model is materially more reliable but slower (per-purpose LLM routing is the
+  fix once available).
+- Full modelling-for-accuracy playbook: composer-mcp repo,
+  `NLQ_ACCURACY_PATTERNS.md` (one-fact-per-source, named metrics, single-entity
+  count sources, natural-language periods, pre-aggregate-to-grain, per-source
+  field hiding, the ~8k retrieval cap, advisory sourceId / dedicated tenant).
+- Product data-MCP: the SI deployment exposes its own MCP server on the ingress
+  (`/mcp`, plus `/sse` and `/message`) with MCP OAuth (client auto-registers; the
+  static data-API key does NOT authenticate there). That is the "data-to-AI
+  layer" an MCP client (Claude etc.) connects to, distinct from this setup-MCP.

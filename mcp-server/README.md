@@ -48,3 +48,17 @@ Once Claude Desktop restarts, open a new chat and ask:
 > "List the available SI setup guides."
 
 Claude should call `list_guides` and return the full list without any skill files uploaded.
+
+## Not to be confused with the SI product data-MCP
+
+This server exposes the **setup knowledge base** (the reference guides) to an MCP
+client. It is separate from the **SI product's own MCP server**, which exposes a
+deployment's **data** to an LLM and is the "data-to-AI layer" customers evaluate.
+
+Field note: a live SI deployment exposes that data-MCP on its ingress at `/mcp`
+(plus `/sse` and `/message`). It authenticates via **MCP OAuth** (the client
+auto-registers and obtains its own token); the static data-API key used for the
+REST `/api/v1/*` calls does **not** authenticate against `/mcp`. To let an LLM
+(Claude, etc.) consume a deployment's data, point an MCP client at
+`https://<host>/mcp`. See the composer-mcp repo for the consumption/embedding
+patterns.
