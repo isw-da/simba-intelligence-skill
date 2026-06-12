@@ -297,6 +297,7 @@ Navigate to `/llm-configuration` in the SI UI.
 | Azure OpenAI | GPT-4.1 | Works | High | Medium |
 | Azure OpenAI | GPT-4.1-mini | Works | Standard | Low |
 | Azure OpenAI | GPT-5.2 | Works | High | Medium |
+| Azure OpenAI | GPT-5.4 | Works (needs GPT-5.x params, see below) | High | Medium |
 | AWS Bedrock | Nova Pro | Works | Standard | Medium |
 | AWS Bedrock | Claude Sonnet 4 | Works | High | High |
 | Local (Ollama) | gemma4:e4b (4B Q4) | Works (single source only) | Acceptable | Free |
@@ -307,6 +308,42 @@ Avoid: GPT-3.5, GPT-4o, Gemini 2.5 Flash Lite.
 **Local model caveat:** gemma4:e4b passes end-to-end queries against a single data source (7/7 in lab testing on an M2 Max 32 GB). It fails source selection when four or more Discovery sources are registered: the model chooses by name proximity rather than schema relevance, producing wrong-source errors. Do not use a local 4B model as the primary LLM in a multi-source environment. See the Ollama section below.
 
 Both **Chat** and **Embeddings** capabilities must be enabled.
+
+---
+
+## Azure OpenAI configuration (and GPT-5.x gotchas)
+
+Configure Azure OpenAI through `/llm-configuration` in the UI, or by writing the config to the SI database directly. Either way you supply four values from your Azure deployment: the endpoint (for example `https://your-resource.openai.azure.com/`), the API version (for example `2025-01-01-preview`), the API key, and the **deployment name** (the name you gave the deployment in Azure, not the underlying model name).
+
+Two things trip people up, especially with the GPT-5.x family.
+
+### 1. The deployment name is a separate field from the model name
+
+SI's Azure service reads the deployment from a parameter called `deployment_name`. This is different from Vertex AI, which uses `model_name`. If you only set the model name and leave the deployment name blank, SI builds a request URL with an empty deployment and Azure replies with a generic `404 Resource not found`, even though your key and endpoint are perfectly valid.
+
+The give-away symptom: a direct `curl` to your deployment returns 200, but SI returns a 404 in the pod logs (`simba_intelligence.llm.ai_data_chat` ... `Error code: 404`). The fix is always to set the deployment name, not to change the key or endpoint.
+
+If you are setting it through the UI, fill in the deployment field. If you are writing the database directly, the CHAT capability parameters must include `deployment_name`:
+
+```json
+{"deployment_name": "your-gpt5-deployment", "model_name": "gpt-5.4", "temperature": 0}
+```
+
+`model_name` here is only used for token counting and context-limit lookup, so an approximate model identifier is fine.
+
+### 2. GPT-5.x rejects `max_tokens` and some older parameters
+
+GPT-5.x deployments return a `400 unsupported_parameter` if the request includes `max_tokens`; they require `max_completion_tokens` instead. The safe approach in SI is to leave `max_tokens` out of the capability parameters entirely, so SI does not send the legacy field. Recent SI builds map the token limit correctly when the field is absent.
+
+Note that GPT-5.4 does accept `temperature: 0` (unlike the o1 and o3 reasoning models, which only allow the default), so you can still get deterministic output for demos.
+
+### Verifying the switch
+
+After changing the chat model, restart the main app so it reloads the LLM config (`kubectl -n <ns> rollout restart deployment/<release>-simba-intelligence-chart`), re-establish your port-forwards, then run a known query in the Playground. Confirm in the pod logs that the source selector chose the expected source, and that the returned numbers match a value you already trust.
+
+### Latency expectation
+
+GPT-5.x runs SI's multi-step agentic pipeline noticeably slower than a Gemini flash model: budget roughly 45 to 55 seconds per Playground query versus 15 to 25 with Gemini 2.5 Flash. It is reliable, just slower, and it is not subject to the tight per-minute quotas that the newer Gemini GA models carry in some regions. For a live demo, narrate over the wait rather than asking a question and going silent.
 
 ---
 
@@ -461,6 +498,22 @@ Cause: small local models (4B parameter range) route by source-name similarity r
 
 Fix: use a cloud LLM (Gemini 2.5 Flash or GPT-4.1) for multi-source environments. If a local model is required, reduce to one active source at a time, or switch to gemma4:26b which has better instruction-following across multiple candidates.
 
+### Azure OpenAI returns 404 even though the deployment is live
+
+Symptom: SI returns a "Technical Error" in the Playground. The pod logs show `simba_intelligence.llm.ai_data_chat ... Error code: 404 - Resource not found`. A direct `curl` to the same Azure deployment returns 200.
+
+Cause: the `deployment_name` parameter is missing from the CHAT capability. SI then builds a request URL with an empty deployment slot, which Azure does not recognise. This commonly happens after copying a Vertex AI config, which uses `model_name` rather than `deployment_name`.
+
+Fix: set `deployment_name` to the Azure deployment name in the CHAT capability parameters. See the Azure OpenAI configuration section above.
+
+### Azure GPT-5.x returns 400 unsupported_parameter
+
+Symptom: pod logs show `400 ... 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead`.
+
+Cause: GPT-5.x deployments reject the legacy `max_tokens` field.
+
+Fix: remove `max_tokens` from the capability parameters so SI does not send it. See the Azure OpenAI configuration section above.
+
 ### Fully qualified image paths (OKE and newer K8s)
 
 Newer Kubernetes versions no longer default to `docker.io/` as the image
@@ -486,6 +539,8 @@ prefix. Fix expected in 26.1 chart release.
 | "Request timed out" in Playground | Caddy buffering SSE | Add `flush_interval -1` and 600 s transport timeouts to Caddyfile |
 | "Invalid field reference" from local LLM | Wrong source selected by small model | Use cloud LLM, or reduce to one active source |
 | LiteLLM fails to import (pip install) | Python 3.14 tomllib conflict | Use Docker image instead of pip |
+| Azure 404 "Resource not found" (deployment is live) | `deployment_name` missing from CHAT capability | Set `deployment_name`, not just `model_name` |
+| Azure GPT-5.x 400 unsupported_parameter | `max_tokens` sent to a GPT-5.x model | Remove `max_tokens` from capability parameters |
 
 ### Restart runbook (local)
 
