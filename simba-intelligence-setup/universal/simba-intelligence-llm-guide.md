@@ -243,11 +243,25 @@ service port is **5050**, not 80.
 Caddyfile content:
 ```
 :8080 {
-  @discovery path /discovery/*
-  reverse_proxy @discovery host.docker.internal:8081
-  reverse_proxy host.docker.internal:8082
+  handle /discovery* {
+    reverse_proxy host.docker.internal:8081 {
+      flush_interval -1
+    }
+  }
+
+  handle {
+    reverse_proxy host.docker.internal:8082 {
+      flush_interval -1
+      transport http {
+        read_timeout 600s
+        write_timeout 600s
+      }
+    }
+  }
 }
 ```
+
+`flush_interval -1` is required. SI streams the answer to the browser via server-sent events (SSE). Without it Caddy buffers the response and the browser shows "Request timed out" after ~30 seconds even though the backend has finished. The 600 s transport timeouts cover the full multi-agent pipeline SI runs per query (15-25 s with a cloud LLM; up to 2 minutes with a local model on Apple Silicon).
 
 macOS/Linux:
 ```bash
@@ -285,10 +299,99 @@ Navigate to `/llm-configuration` in the SI UI.
 | Azure OpenAI | GPT-5.2 | Works | High | Medium |
 | AWS Bedrock | Nova Pro | Works | Standard | Medium |
 | AWS Bedrock | Claude Sonnet 4 | Works | High | High |
+| Local (Ollama) | gemma4:e4b (4B Q4) | Works (single source only) | Acceptable | Free |
+| Local (Ollama) | gemma4:26b (26B) | Untested end-to-end | Expected high | Free |
 
 Avoid: GPT-3.5, GPT-4o, Gemini 2.5 Flash Lite.
 
+**Local model caveat:** gemma4:e4b passes end-to-end queries against a single data source (7/7 in lab testing on an M2 Max 32 GB). It fails source selection when four or more Discovery sources are registered: the model chooses by name proximity rather than schema relevance, producing wrong-source errors. Do not use a local 4B model as the primary LLM in a multi-source environment. See the Ollama section below.
+
 Both **Chat** and **Embeddings** capabilities must be enabled.
+
+---
+
+## Local LLM via Ollama and LiteLLM (air-gapped or cost-free)
+
+This route removes the cloud dependency completely. SI sends requests to a LiteLLM proxy running in Docker, which forwards them to Ollama running locally. The hardware requirement is any Apple Silicon Mac with 32 GB unified memory, or an x86 machine with a GPU and at least 16 GB VRAM for a 4B model.
+
+### 1. Install and start Ollama
+
+```bash
+brew install ollama
+ollama serve &
+ollama pull gemma4:e4b   # ~9.6 GB download
+```
+
+Verify: `curl http://localhost:11434/api/tags` should return a JSON list of models.
+
+### 2. Create the LiteLLM config
+
+Save to `/tmp/litellm-si-config.yaml`:
+
+```yaml
+model_list:
+  - model_name: gemma4:e4b
+    litellm_params:
+      model: openai/gemma4:e4b
+      api_base: http://host.docker.internal:11434/v1
+      api_key: ollama
+
+litellm_settings:
+  request_timeout: 300
+```
+
+**Critical prefix:** use `openai/` (not `ollama/` or `ollama_chat/`) and point `api_base` at Ollama's `/v1` endpoint. This routes to Ollama's OpenAI-compatible endpoint (`/v1/chat/completions`), which produces proper streaming tool-call deltas. The native Ollama endpoint produces raw text JSON and breaks SI's tool-call parsing. Do not add `drop_params: true` — it is not needed and causes issues.
+
+### 3. Start LiteLLM via Docker
+
+```bash
+docker run -d --rm --name litellm-si \
+  -p 4000:4000 \
+  -v /tmp/litellm-si-config.yaml:/app/config.yaml \
+  ghcr.io/berriai/litellm:main-latest \
+  --config /app/config.yaml --port 4000 --host 0.0.0.0
+```
+
+Use the Docker image, not `pip install litellm`. LiteLLM's native install breaks on Python 3.14 (the `pip` package fails to import due to a `tomllib` dependency conflict).
+
+Verify: `curl http://localhost:4000/health` should return `{"status":"healthy"}`.
+
+### 4. Register LiteLLM as an LLM provider in SI
+
+SI only supports Vertex AI and Azure OpenAI natively. Register LiteLLM as an Azure OpenAI provider using these settings:
+
+| Field | Value |
+|---|---|
+| Provider | Azure OpenAI |
+| Azure endpoint | `http://host.docker.internal:4000` |
+| API version | `2024-02-01` |
+| API key | `ollama` |
+| Chat model | `gemma4:e4b` |
+| Embeddings | Point at a cloud provider (Vertex AI text-embedding-004 or Azure text-embedding-ada-002) |
+
+LiteLLM does not serve an embeddings model unless you add one to the config. The embeddings capability is only used at data source creation time, so pointing embeddings at a cloud provider while using a local model for chat is a valid and tested configuration.
+
+If you need fully air-gapped embeddings, add `nomic-embed-text` to Ollama and to the LiteLLM config:
+
+```yaml
+  - model_name: nomic-embed-text
+    litellm_params:
+      model: openai/nomic-embed-text
+      api_base: http://host.docker.internal:11434/v1
+      api_key: ollama
+```
+
+### 5. Caddy for Ollama queries
+
+Use the Caddy config from the Local Access section above with `flush_interval -1` and the 600 s transport timeouts. Ollama queries through SI's full multi-agent pipeline take up to 2 minutes on Apple Silicon. Without the 600 s timeouts the browser will report "Request timed out" mid-query even though the backend is still running.
+
+### Source selection limitation (4B models)
+
+Lab testing (M2 Max, 32 GB, 4 Discovery sources registered) shows that gemma4:e4b reliably generates correct SQL when querying the right source but cannot reliably identify which source to query. With multiple sources that have semantically similar names (for example, "Telco subscriber performance" and "Publisher site performance"), the model picks by name proximity rather than schema relevance. This produces errors like `Invalid field reference` because the model issues a query with fields that do not exist in the source it selected.
+
+The 7/7 pass rate documented in Jira PY-516 was against a single financial transactions dataset. That result does not extend to multi-source deployments.
+
+Workaround: if you have multiple sources and must use a local model, reduce the registered sources to one at a time, or upgrade to a larger local model (gemma4:26b uses ~16-17 GB unified memory on Apple Silicon and has better instruction-following).
 
 ---
 
@@ -342,6 +445,22 @@ Both **Chat** and **Embeddings** capabilities must be enabled.
 
 ## Known Issues
 
+### Browser shows "Request timed out" mid-query (SSE buffering)
+
+Symptom: the Playground shows a spinner, then "Request timed out" at roughly 30 seconds. The SI pod logs show the query completed successfully. The answer never reaches the browser.
+
+Cause: the Caddy reverse proxy buffers SSE responses by default and has an implicit short read timeout.
+
+Fix: use the Caddyfile from the Local Access section above. Specifically `flush_interval -1` on both upstreams, and `read_timeout 600s` / `write_timeout 600s` on the main app upstream. Restart Caddy after editing.
+
+### Local LLM picks the wrong data source with 4+ sources registered
+
+Symptom: SI returns "Invalid field reference" or a 500 from Discovery. The pod logs show it queried the wrong source (fields from source A applied to source B's schema).
+
+Cause: small local models (4B parameter range) route by source-name similarity rather than field-level schema matching. With four or more sources present, the wrong source is chosen for semantically ambiguous queries like "total revenue" or "data usage by region".
+
+Fix: use a cloud LLM (Gemini 2.5 Flash or GPT-4.1) for multi-source environments. If a local model is required, reduce to one active source at a time, or switch to gemma4:26b which has better instruction-following across multiple candidates.
+
 ### Fully qualified image paths (OKE and newer K8s)
 
 Newer Kubernetes versions no longer default to `docker.io/` as the image
@@ -364,6 +483,9 @@ prefix. Fix expected in 26.1 chart release.
 | ImagePullBackOff | No internet, rate limit, or missing registry prefix | Check `describe pod` Events |
 | Pods Pending | Insufficient CPU/memory | Add nodes or resize |
 | "does not have service port 8082" | Wrong port-forward syntax | Use `8082:5050` not just `8082` |
+| "Request timed out" in Playground | Caddy buffering SSE | Add `flush_interval -1` and 600 s transport timeouts to Caddyfile |
+| "Invalid field reference" from local LLM | Wrong source selected by small model | Use cloud LLM, or reduce to one active source |
+| LiteLLM fails to import (pip install) | Python 3.14 tomllib conflict | Use Docker image instead of pip |
 
 ### Restart runbook (local)
 
