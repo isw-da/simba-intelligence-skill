@@ -100,6 +100,10 @@ data_tier_up() {
 }
 
 # ---------- custom EDC images ----------
+# For each name in CUSTOM_EDCS, expect env/edc/<name>/ with ONE of:
+#   build.sh   — builds <name>:latest (e.g. clone the connector repo, mvn package, docker build)
+#   Dockerfile — built directly here
+# then kind-loads <name>:latest, and applies deploy.yaml (the connector Deployment/Service) if present.
 custom_edcs_build() {
   [ -n "$CUSTOM_EDCS" ] || return 0
   phase "custom EDC images"
@@ -108,13 +112,21 @@ custom_edcs_build() {
   for name in "${_edcs[@]}"; do
     name="$(echo "$name" | xargs)"
     local ctx="$ENV_DIR/edc/$name"
-    [ -d "$ctx" ] || { warn "edc/$name not found; expecting a build context or BUILD.md"; continue; }
-    if [ -f "$ctx/Dockerfile" ]; then
+    [ -d "$ctx" ] || { warn "edc/$name not found; expecting build.sh / Dockerfile / deploy.yaml"; continue; }
+    if [ -x "$ctx/build.sh" ]; then
+      ( cd "$ctx" && NAMESPACE="$NAMESPACE" CLUSTER="$CLUSTER" bash build.sh ) || die "edc/$name/build.sh failed"
+      ok "built $name via build.sh"
+    elif [ -f "$ctx/Dockerfile" ]; then
       docker build -t "$name:latest" "$ctx" || die "build $name failed"
-      [ -n "$CLUSTER" ] && kind load docker-image "$name:latest" --name "$CLUSTER"
-      ok "built + loaded $name:latest"
+      ok "built $name:latest from Dockerfile"
     else
-      warn "edc/$name has no Dockerfile; see edc/$name/BUILD.md for the source repo to build from"
+      warn "edc/$name has no build.sh or Dockerfile; see edc/$name/BUILD.md (image not built)"
+    fi
+    docker image inspect "$name:latest" >/dev/null 2>&1 && [ -n "$CLUSTER" ] && \
+      { kind load docker-image "$name:latest" --name "$CLUSTER" && ok "loaded $name:latest into $CLUSTER"; }
+    if [ -f "$ctx/deploy.yaml" ]; then
+      kubectl -n "$NAMESPACE" apply -f "$ctx/deploy.yaml" && ok "applied edc/$name/deploy.yaml" \
+        || warn "edc/$name/deploy.yaml apply reported issues"
     fi
   done
 }
