@@ -1,0 +1,16 @@
+:8080 {
+  handle /discovery* {
+    reverse_proxy host.docker.internal:8081 {
+      flush_interval -1
+    }
+  }
+  handle {
+    reverse_proxy host.docker.internal:8082 {
+      flush_interval -1
+      transport http {
+        read_timeout 600s
+        write_timeout 600s
+      }
+    }
+  }
+}
