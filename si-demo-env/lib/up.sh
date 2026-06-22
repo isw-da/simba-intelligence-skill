@@ -7,13 +7,16 @@ load_config
 load_secrets
 preflight
 ensure_namespace
+prereqs               # PVCs + Oracle ojdbc driver — BEFORE helm (else the EDC hangs --wait)
 helm_up
 wait_ready
 custom_edcs_build
 secrets_to_k8s
 data_tier_up
 access_up
-import_state          # BEST-EFFORT (phase 7) — see common.sh / README honesty section
+discover_tenant      # fresh install regenerates the tenant id; discover it for LLM/rules
+llm_config_up        # Azure chat (+ optional embeddings) from secrets.env
+import_state          # BEST-EFFORT — connections scriptable; SOURCES need the Data Source Agent
 apply_rules
 verify_gate
 

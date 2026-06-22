@@ -29,7 +29,8 @@ except Exception:
     pass
 
 def resolve(rule, key, env_v, disc_v):
-    return rule.get(key) or env_v or disc_v
+    # env (the discovered tenant on a fresh install) wins, then the rule's own, then auto-discovered
+    return env_v or rule.get(key) or disc_v
 
 ins = upd = skip = 0
 for r in rows:

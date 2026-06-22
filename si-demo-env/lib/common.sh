@@ -62,6 +62,45 @@ ensure_namespace() {
   ok "namespace ${NAMESPACE} present"
 }
 
+# ---------- prerequisites (PVCs + EDC drivers) — MUST run before helm ----------
+# The packaged Oracle EDC mounts composer-shared-volume (subPath edc-oracle/drivers) and crash-loops
+# without ojdbc11.jar, which makes helm --wait hang. So create the PVC and stage the driver first.
+prereqs() {
+  phase "prerequisites"
+  if compgen -G "$ENV_DIR/prereqs/*.yaml" >/dev/null; then
+    kubectl -n "$NAMESPACE" apply -f "$ENV_DIR/prereqs/" || die "prereq manifests failed"
+    ok "applied prereq manifests"
+  fi
+  case ",$EDCS," in *,oracle,*) stage_oracle_driver ;; esac
+}
+
+stage_oracle_driver() {
+  kubectl -n "$NAMESPACE" get pvc composer-shared-volume >/dev/null 2>&1 \
+    || { warn "no composer-shared-volume PVC (add env/prereqs/); Oracle EDC will not start"; return 0; }
+  kubectl -n "$NAMESPACE" apply -f - >/dev/null 2>&1 <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata: {name: driver-loader}
+spec:
+  restartPolicy: Never
+  containers: [{name: driver-loader, image: busybox, command: ["sleep","3600"], volumeMounts: [{name: shared, mountPath: /drivers}]}]
+  volumes: [{name: shared, persistentVolumeClaim: {claimName: composer-shared-volume}}]
+EOF
+  kubectl -n "$NAMESPACE" wait --for=condition=Ready pod/driver-loader --timeout=90s >/dev/null 2>&1 \
+    || { warn "driver-loader not ready; skipping Oracle driver"; return 0; }
+  local jar="${OJDBC_JAR:-/tmp/ojdbc11.jar}"
+  if [ ! -f "$jar" ]; then
+    local ver; ver="$(curl -s https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc11/maven-metadata.xml 2>/dev/null | grep -oE '<release>[^<]+' | sed 's/<release>//')"
+    ver="${ver:-23.5.0.24.07}"
+    log "fetching ojdbc11 $ver from Maven Central (~7.7MB)"
+    curl -sSL -o "$jar" "https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc11/$ver/ojdbc11-$ver.jar" \
+      || { warn "ojdbc download failed; supply OJDBC_JAR=/path/ojdbc11.jar and re-run"; return 0; }
+  fi
+  kubectl -n "$NAMESPACE" exec driver-loader -- mkdir -p /drivers/edc-oracle/drivers 2>/dev/null
+  kubectl cp "$jar" "$NAMESPACE/driver-loader:/drivers/edc-oracle/drivers/ojdbc11.jar" \
+    && ok "staged ojdbc11.jar for the Oracle EDC" || warn "ojdbc stage failed"
+}
+
 helm_up() {
   phase "helm install/upgrade (${RELEASE})"
   local chart; chart="$(ls "$ENV_DIR"/chart/*.tgz 2>/dev/null | head -1)"
@@ -156,6 +195,41 @@ access_up() {
   log "main: $(curl -s -o /dev/null -w '%{http_code}' --max-time 4 http://localhost:8082/ 2>/dev/null)  playground: $(curl -s -o /dev/null -w '%{http_code}' --max-time 4 http://localhost:8080/playground 2>/dev/null)"
 }
 
+# ---------- tenant discovery ----------
+# A fresh install regenerates the tenant/admin-user ids. Discover them at runtime (needs access_up
+# first) and export so the LLM config + rules attach to the right tenant, not the captured one.
+discover_tenant() {
+  phase "discover tenant"
+  local u; u="$(curl -s -u "${DISCO_ADMIN_USER}:${DISCO_ADMIN_PASSWORD}" http://localhost:8081/discovery/api/user 2>/dev/null)"
+  TENANT_ID="$(printf '%s' "$u" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('accountID') or d.get('accountId') or '')" 2>/dev/null)"
+  USER_ID="$(printf '%s' "$u" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('id') or '')" 2>/dev/null)"
+  export TENANT_ID USER_ID
+  [ -n "$TENANT_ID" ] && ok "tenant=$TENANT_ID user=$USER_ID" || warn "could not discover tenant (is access up + DISCO_ADMIN_PASSWORD set?)"
+}
+
+# ---------- LLM config ----------
+# Insert the Azure chat (+ optional embeddings) config for the discovered tenant from secrets.env.
+llm_config_up() {
+  phase "LLM config"
+  [ -n "${AZURE_OPENAI_API_KEY:-}" ] || { warn "no AZURE_OPENAI_API_KEY in secrets.env; configure the LLM in the UI (/llm-configuration)"; return 0; }
+  [ -n "${TENANT_ID:-}" ] || discover_tenant
+  [ -n "${TENANT_ID:-}" ] || { warn "no tenant; skipping LLM config"; return 0; }
+  local chart; chart="$(kubectl -n "$NAMESPACE" get pods -o name | grep "$CHART_SVC" | grep -vE 'worker|mcp|celery|redis|init|dbm' | head -1 | sed 's#pod/##')"
+  [ -n "$chart" ] || { warn "chart pod not found; skipping LLM config"; return 0; }
+  kubectl -n "$NAMESPACE" exec -i "$chart" -- env T="$TENANT_ID" U="$USER_ID" \
+    K="$AZURE_OPENAI_API_KEY" EP="${AZURE_OPENAI_ENDPOINT:-}" AV="${AZURE_OPENAI_API_VERSION:-2025-01-01-preview}" \
+    CD="${AZURE_CHAT_DEPLOYMENT:-gpt-5-chat-deployment}" ED="${AZURE_EMBED_DEPLOYMENT:-}" python3 -c '
+import os,json,psycopg2
+c=psycopg2.connect(host="si-logi-symphony-postgresql",user=os.environ["POSTGRES_USER"],password=os.environ["POSTGRES_PASSWORD"],dbname=os.environ.get("POSTGRES_DATABASE","simbaintelligence"),connect_timeout=8);cur=c.cursor()
+cur.execute("INSERT INTO llm_configurations (tenant_id,provider_type,name,credentials,created_by,updated_by,created_at,updated_at) VALUES (%s,2,%s,%s,%s,%s,now(),now()) RETURNING id",(os.environ["T"],"Azure OpenAI",json.dumps({"api_key":os.environ["K"],"api_version":os.environ["AV"],"azure_endpoint":os.environ["EP"]}),os.environ["U"],os.environ["U"]));cid=cur.fetchone()[0]
+cur.execute("INSERT INTO llm_capabilities (capability_type,is_active,parameters,llm_configuration_id) VALUES (1,true,%s,%s)",(json.dumps({"deployment_name":os.environ["CD"]}),cid))
+if os.environ.get("ED"): cur.execute("INSERT INTO llm_capabilities (capability_type,is_active,parameters,llm_configuration_id) VALUES (2,true,%s,%s)",(json.dumps({"deployment_name":os.environ["ED"]}),cid))
+c.commit();print("  LLM configured: chat=%s embeddings=%s"%(os.environ["CD"],os.environ.get("ED") or "(none — set AZURE_EMBED_DEPLOYMENT or configure Vertex)"))
+' 2>&1 | sed 's/^/  /' && ok "LLM config written; restarting app to load it" || warn "LLM config insert failed"
+  kubectl -n "$NAMESPACE" rollout restart deploy/"$CHART_SVC" >/dev/null 2>&1
+  kubectl -n "$NAMESPACE" rollout status deploy/"$CHART_SVC" --timeout=180s >/dev/null 2>&1 || true
+}
+
 # ---------- Discovery API ----------
 _disco() { curl -s -u "${DISCO_ADMIN_USER}:${DISCO_ADMIN_PASSWORD}" -H "Accept: application/vnd.composer.v3+json" -H "Content-Type: application/vnd.composer.v3+json" "$@"; }
 
@@ -178,7 +252,8 @@ apply_rules() {
   local pod; pod="$(kubectl -n "$NAMESPACE" get pods -o name | grep "$CHART_SVC" | grep -vE 'worker|mcp|celery|redis' | head -1 | sed 's#pod/##')"
   [ -n "$pod" ] || { warn "chart pod not found; skipping rules"; return 0; }
   if [ -x "$_lib_dir/restore-rules.py" ]; then
-    kubectl -n "$NAMESPACE" exec -i "$pod" -- python3 -c "$(cat "$_lib_dir/restore-rules.py")" < "$rules" \
+    kubectl -n "$NAMESPACE" exec -i "$pod" -- env TENANT_ID="${TENANT_ID:-}" USER_ID="${USER_ID:-}" \
+      python3 -c "$(cat "$_lib_dir/restore-rules.py")" < "$rules" \
       && ok "rules applied from rules.json" || warn "rules apply reported issues"
   else
     warn "lib/restore-rules.py missing"
