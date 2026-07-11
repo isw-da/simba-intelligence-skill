@@ -22,7 +22,7 @@ description: >
 
 # Simba Intelligence — Setup & Operations Skill
 
-<!-- Skill version: 2026-05-18 -->
+<!-- Skill version: 2026-07-11 -->
 
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and

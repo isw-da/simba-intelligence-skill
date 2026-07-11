@@ -267,3 +267,34 @@ Data connections and manual data source configuration will still work.
 - Use least-privilege IAM roles and service accounts
 - Monitor usage and cost in the provider dashboard
 - Only supervisor-role users should access `/llm-configuration`
+
+---
+
+## 26.2 update — providers and non-standard models (verified 2026-07-11)
+
+**Four native provider types in 26.2:** Vertex AI, Azure OpenAI, AWS Bedrock, and
+**Ollama** (`GET /api/v1/config/llm/providers`). Ollama is now first-class
+(PY-516) — a local/air-gapped model with no LiteLLM proxy. There is still **no
+native OpenAI-direct or xAI/Grok provider.**
+
+**Running Grok or OpenAI-direct (or any non-native model): use a LiteLLM proxy**
+that presents the Azure OpenAI wire format to SI and translates to the real
+provider. This is the same bridge pattern already documented for Ollama-via-proxy.
+Point SI's Azure OpenAI `azure_endpoint` at the proxy, `deployment_name` at the
+proxy's `model_name`. Gotchas:
+- SI's save-time probe sends `model: null`; xAI rejects it — the bridge absorbs it.
+- **GPT-5.6 (Sol/Terra/Luna) does NOT drive SI's query pipeline** on chat
+  completions: function tools require `reasoning_effort=none`, and with reasoning
+  off the model is unreliable (fabricates auth errors). It needs the `/v1/responses`
+  API, which SI does not call. The newest OpenAI model that works with SI is
+  **GPT-5.5**; **GPT-5.4** is the current demo/prospect-parity default (works with
+  reasoning + tools, accepts temperature 0, half the token cost of 5.5).
+
+**Different LLMs per agent (26.2, PY-531):** query, source-creation and related
+agents can now use different models — configure separate capabilities/configs.
+
+**Embeddings-switch is safer in 26.2:** switching the embeddings provider on an
+instance with existing sources now auto-detects and wipes the stale tenant-scoped
+vector indexes (PY-557), so source-match vectors are rebuilt rather than silently
+mismatched. Still verify source selection after switching. See
+`references/si-26.2-release.md` for the full reconciliation.
