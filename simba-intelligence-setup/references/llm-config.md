@@ -298,3 +298,27 @@ instance with existing sources now auto-detects and wipes the stale tenant-scope
 vector indexes (PY-557), so source-match vectors are rebuilt rather than silently
 mismatched. Still verify source selection after switching. See
 `references/si-26.2-release.md` for the full reconciliation.
+
+---
+
+## Shared Azure deployment contention (field lesson, 2026-07-20)
+
+Symptom: persistent `429 rate_limit_exceeded` on a shared Azure OpenAI
+deployment (for us: gpt-5.4 on symphony-eastus2) for 10+ minutes, across every
+instance pointing at it. This is quota contention with other users of the shared
+resource, not a burst; retrying does not clear it, and it can take a live demo
+down (it did, org-wide, on 2026-07-16).
+
+Robust demo posture: run chat through a LiteLLM bridge on your own key.
+The bridge presents an Azure-compatible endpoint, so SI's Azure provider type
+works unchanged:
+
+- `llm_configurations.credentials`: `{"api_key": "<bridge token>",
+  "api_version": "2025-01-01-preview", "azure_endpoint": "http://<bridge-host>:8104"}`
+- chat capability `parameters`: `{"temperature": 0.0, "deployment_name": "<bridge model_name>"}`
+- From a kind-cluster pod, the host bridge is reachable at the docker network
+  gateway (typically `172.18.0.1`).
+- Keep the original Azure config row for one-UPDATE rollback; restart the SI app
+  and worker deployments after switching (config is read at startup).
+- Embeddings can stay on Azure (ada-002 is rarely contended); mixed-capability
+  configs across providers work.

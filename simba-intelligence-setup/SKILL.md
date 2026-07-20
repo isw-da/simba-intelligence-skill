@@ -142,6 +142,8 @@ When a user asks to install SI, determine their environment first:
 | On-premises Kubernetes | `references/deployment-onprem.md` |
 | Air-gapped / disconnected network | `references/deployment-airgapped.md` |
 | Uninstall / fresh reinstall | `references/teardown.md` |
+| Backup / restore / move an instance (identity-carry) | `references/backup-restore.md` |
+| Build Composer dashboards programmatically (26.2 API) | `references/composer-dashboard-api.md` |
 
 ---
 
