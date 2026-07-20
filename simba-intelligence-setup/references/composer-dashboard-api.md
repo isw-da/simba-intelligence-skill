@@ -44,3 +44,7 @@ with what this stack actually accepts.
   byte-pump after the handshake is enough).
 - **First write after a pg_restore may hit stale sequences** (ACL tables).
   See backup-restore.md lesson 4.
+- **KPI `Comparison Metric` must be non-empty** (26.2): setting it to `[]` to
+  hide the comparison row crashes the widget with the classic
+  `TypeError: ... (reading 'value')`. Keep it equal to `Metric` and accept the
+  cosmetic "$0.00 vs" row, or restyle in the UI.
