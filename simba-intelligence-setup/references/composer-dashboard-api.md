@@ -48,3 +48,21 @@ with what this stack actually accepts.
   hide the comparison row crashes the widget with the classic
   `TypeError: ... (reading 'value')`. Keep it equal to `Metric` and accept the
   cosmetic "$0.00 vs" row, or restyle in the UI.
+
+## In-Composer Simba Intelligence assistant + AI visuals (26.2 feature flags)
+
+Two AI capabilities inside Composer dashboards, gated by Composer feature flags
+(Confluence "Composer Feature flags"), verified live 2026-07-21:
+- `symphony-chat` (default false): the "Open Simba Intelligence Chat" assistant on
+  dashboards. When on, it answers governed NL questions against the same sources the
+  dashboard uses (numbers match the tiles and any Claude/MCP answer). It DESCRIBES
+  (table + NL conclusion; prose varies run-to-run, numbers do not) and returns a
+  structured TEXT bar-chart breakdown when asked to "create a chart". Precondition:
+  `GET /api/v1/config/llm/status` returns `{"is_configured":true}`. Panel UX: paste then
+  click the send arrow (Return does not submit).
+- `symphony-ai-visuals-flow` (default none): gates the "Create visual with AI" (+ menu,
+  BETA) that generates a rendered governed visual. Needs a valid visual-generation
+  chatflow id; with `none` the menu item is present but disabled. Do not enable on a live
+  demo rig without testing a known-good chatflow id.
+- `symphony-ai-sql-flow` (none): chatflow for AI SQL generation in source creation.
+Full behaviour + capture gotchas: isw-da/logi-si-docs composer-ai-assistant-26.2.md.
