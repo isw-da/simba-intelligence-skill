@@ -60,9 +60,12 @@ Two AI capabilities inside Composer dashboards, gated by Composer feature flags
   structured TEXT bar-chart breakdown when asked to "create a chart". Precondition:
   `GET /api/v1/config/llm/status` returns `{"is_configured":true}`. Panel UX: paste then
   click the send arrow (Return does not submit).
-- `symphony-ai-visuals-flow` (default none): gates the "Create visual with AI" (+ menu,
-  BETA) that generates a rendered governed visual. Needs a valid visual-generation
-  chatflow id; with `none` the menu item is present but disabled. Do not enable on a live
-  demo rig without testing a known-good chatflow id.
+- "Create visual with AI" (+ menu, BETA badge): WORKS on this build. It opens the SI
+  assistant in build mode and renders a real governed visual (correct numbers) with a
+  "Save to Dashboard" button. GOTCHA: the menu item is disabled ONLY while the chat panel
+  is open in build mode (frontend `disabled: (saasMode&&limit) || currentComposerType==="Visual"`),
+  so CLOSE the chat before opening the + menu. (Earlier note that it needed
+  `symphony-ai-visuals-flow` set was wrong — that flag selects a chatflow variant, not the
+  on/off gate for this build.)
 - `symphony-ai-sql-flow` (none): chatflow for AI SQL generation in source creation.
 Full behaviour + capture gotchas: isw-da/logi-si-docs composer-ai-assistant-26.2.md.
