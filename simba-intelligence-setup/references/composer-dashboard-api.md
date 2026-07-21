@@ -69,3 +69,22 @@ Two AI capabilities inside Composer dashboards, gated by Composer feature flags
   on/off gate for this build.)
 - `symphony-ai-sql-flow` (none): chatflow for AI SQL generation in source creation.
 Full behaviour + capture gotchas: isw-da/logi-si-docs composer-ai-assistant-26.2.md.
+
+## Reskin: theme + logo (verified 2026-07-21)
+
+To reskin Composer (e.g. a purple "Simba Intelligence" / symphony look) and put a
+custom logo top-left, all via API, reversible:
+- Themes: `POST /discovery/api/customization/themes` (body `{"masterThemeId":"modern",
+  "name":"...","content":{...}}`, strip id/system) then
+  `POST /discovery/api/customization/themes/activate {"id":"<id>"}`.
+  Skin colours: `content.variables.colors.brandColor` (top nav bar), `primary`/
+  `intentPrimary`/`accentColor`/`linkColor`; chart colours `variables.palettes.
+  DefaultSequential`/`DefaultCategorical`. There is no supplied "symphony" theme;
+  the `d+a_light` system theme uses `$symphony.*` tokens if you want that base.
+- Logo: `branding.headerLogo` is varchar(40) (a filename ref, not a data URI — a
+  data-URI PUT 409s). Clean route is a custom-CSS override:
+  `POST /discovery/api/branding/customCss` (NO `.css`), multipart field `fileData`
+  = the CSS file (POST replaces; GET current at `/customCss.css`, append, re-POST).
+  Rule: `img[src*="headerLogo"]{content:url("data:image/png;base64,...")!important;
+  height:34px!important;width:auto!important}`.
+Full recipe + revert: isw-da/logi-si-docs composer-theming-branding-26.2.md.
