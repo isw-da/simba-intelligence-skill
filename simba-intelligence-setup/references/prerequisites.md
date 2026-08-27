@@ -146,3 +146,27 @@ helm version                   # Helm 3.17+
 | "helm: command not found" | Reopen terminal after Helm install |
 | Node shows "NotReady" | K8s still starting — wait 1-2 minutes |
 | "Unable to connect to the server" | Docker Desktop not running or K8s not enabled |
+
+
+## Disk space on the cluster node, added 2026-08-27
+
+**Check free disk before installing, and require at least 10G.** A long-lived kind node
+accumulates images and fills up quietly.
+
+```bash
+docker exec <cluster>-control-plane df -h / | tail -1
+```
+
+This cost a real install. A node 101 days old was at 56G of 59G used. The presenting symptom
+was `Init:CrashLoopBackOff` on `wait-for-database-schema` and `DB migration failed`, and only
+the Postgres server log said `No space left on device`. Nothing in the pod events or the Helm
+output mentioned disk.
+
+To recover without rebuilding the cluster, evict images that can be re-pulled publicly:
+
+```bash
+docker exec <cluster>-control-plane crictl rmi <image>   # named images only
+```
+
+Take care to leave locally built images alone: custom EDC connector images are not in any
+registry and evicting them means rebuilding.

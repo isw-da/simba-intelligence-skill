@@ -219,17 +219,46 @@ CADDY_CID=$(docker ps -q --filter ancestor=caddy:2 | head -1)
 
 sleep 3
 
-# Verify
-if curl -s http://localhost:8080/ | grep -q "html" 2>/dev/null; then
-  info "Main app is accessible"
+# --- Verify ---
+# NOTE, verified against a live 26.2.1 install on 2026-08-27: the SI app is a
+# single-page app that returns HTTP 200 with text/html for ANY unmatched path.
+# `/`, `/total/nonsense` and `/this/is/not/real` all return 200 + HTML. So the
+# old check here, `curl / | grep -q html`, passed on an installation whose
+# Composer half was dead, and would pass on one with no working app at all.
+# It could not fail. Check endpoints that return DATA instead.
+
+verify_si() {
+  local body
+  body=$(curl -s --max-time 10 http://localhost:8080/api/v1/healthz 2>/dev/null) || return 1
+  # must be JSON reporting OK, not the SPA fallback
+  echo "$body" | grep -q '"status"' || return 1
+  echo "$body" | grep -qi 'ok' || return 1
+  return 0
+}
+
+verify_composer() {
+  local code
+  # An unauthenticated Composer API call must return 401, not 200+HTML. A 200
+  # here means the SPA swallowed the path and Composer is NOT being reached:
+  # that is the mechanism behind the documented "login loop" symptom.
+  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+    -H "Accept: application/vnd.composer.v3+json" \
+    http://localhost:8080/discovery/api/sources 2>/dev/null)
+  [ "$code" = "401" ] || [ "$code" = "200" ]
+}
+
+if verify_si; then
+  info "Simba Intelligence is answering on /api/v1/healthz"
 else
-  warn "Main app not responding yet — may need a few more seconds"
+  warn "SI health check did not return JSON. A 200 with HTML is the SPA fallback, not a working app."
+  warn "Check: kubectl -n $NAMESPACE get pods"
 fi
 
-if curl -s http://localhost:8080/discovery/api/user 2>/dev/null | grep -q "401\|Unauthorized" 2>/dev/null; then
-  info "Discovery is accessible"
+if verify_composer; then
+  info "Composer is answering under /discovery"
 else
-  warn "Discovery not responding yet — may need a few more seconds"
+  warn "Composer did not answer under /discovery. If you get 200 with HTML there, the SI"
+  warn "single-page app is swallowing the path and Composer is not being reached."
 fi
 
 # --- Done ---
