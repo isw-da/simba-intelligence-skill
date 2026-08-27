@@ -11,7 +11,7 @@ language querying, vision analysis) will function.
 
 | Provider | Model | Status | Quality | Relative Cost |
 |---|---|---|---|---|
-| Google Vertex AI | Gemini 2.0 Flash | Supported | Standard | Low |
+| Google Vertex AI | Gemini 2.0 Flash | **RETIRED, 404s** | n/a | n/a |
 | Google Vertex AI | Gemini 2.5 Flash | Supported | High | Medium |
 | Google Vertex AI | Gemini 2.5 Pro | Supported | High | High |
 | Azure OpenAI | GPT-4.1 | Supported | High | Medium |
@@ -23,8 +23,8 @@ language querying, vision analysis) will function.
 Not recommended: GPT-3.5 (no structured output), GPT-4o (unreliable query
 generation), Gemini 2.5 Flash Lite (unstable).
 
-Recommendation: Vertex AI Gemini 2.0 Flash for evaluation and development,
-Gemini 2.5 Flash for production workloads.
+Recommendation: Vertex AI **Gemini 2.5 Flash** for both evaluation and production.
+Gemini 2.0 Flash was the previous recommendation and no longer exists (see below).
 
 ---
 
@@ -54,7 +54,7 @@ Both Chat and Embeddings must be active for Simba Intelligence to function.
 
 **Configuration:**
 - Paste the complete service account JSON into the credentials field
-- Chat model: `gemini-2.0-flash` (dev) or `gemini-2.5-flash` (prod)
+- Chat model: `gemini-2.5-flash`. Do NOT use `gemini-2.0-flash`, it is retired (see below)
 - Embeddings model: `text-embedding-004`
 - Location: `us-central1` (or preferred region)
 
@@ -322,3 +322,97 @@ works unchanged:
   and worker deployments after switching (config is read at startup).
 - Embeddings can stay on Azure (ada-002 is rarely contended); mixed-capability
   configs across providers work.
+
+
+---
+
+## Verified against a live 26.2.1 instance, 27 August 2026
+
+Configured end to end on a kind cluster with a Vertex AI service account. Everything below
+was executed, not read.
+
+### Gemini 2.0 Flash is retired and this document used to recommend it
+
+Calling it through Vertex returns 404:
+
+```
+Publisher model projects/<project>/locations/us-central1/publishers/google/models/gemini-2.0-flash
+was not found or your project does not have access to it.
+```
+
+Tested directly against Vertex with the service account, `us-central1`:
+
+| model | result |
+|---|---|
+| `gemini-2.0-flash` | **404** |
+| `gemini-2.0-flash-001` | **404** |
+| `gemini-2.0-flash-lite` | **404** |
+| `gemini-2.5-flash` | 200 |
+| `gemini-2.5-pro` | 200 |
+| `gemini-2.5-flash-lite` | 200 |
+
+Embeddings all still work: `text-embedding-004`, `text-embedding-005`,
+`text-multilingual-embedding-002`, `gemini-embedding-001`.
+
+Note that this document lists Gemini 2.5 Flash Lite as "unstable, not recommended", and it
+does resolve. That judgement is not retested here.
+
+### SI reports this badly, so recognise it
+
+SI validates a capability by actually calling the model, which is good. But the API returns
+only `{"error": "Creation failed: Invalid Model Name"}`. The real cause, including the 404
+and the full model path, appears **only in the pod log**:
+
+```bash
+kubectl -n simba-intel logs <si-pod> | grep "Validation failed for capability"
+```
+
+"Invalid Model Name" reads like a typo in the name. It usually means the model is not
+available to that project or region.
+
+### The API payload, which the UI steps do not give you
+
+`POST /api/v1/config/llm`, authenticated, `Content-Type: application/json`:
+
+```json
+{
+  "provider_id": "VERTEX_AI",
+  "name": "Vertex AI Gemini 2.5 Flash",
+  "credentials": { ...the ENTIRE service account JSON... },
+  "is_active": true,
+  "capabilities": [
+    {"capability_type": "chat",       "is_active": true,
+     "parameters": {"model_name": "gemini-2.5-flash",   "location": "us-central1"}},
+    {"capability_type": "embeddings", "is_active": true,
+     "parameters": {"model_name": "text-embedding-004", "location": "us-central1"}}
+  ]
+}
+```
+
+Four things that each cost a failed attempt:
+
+1. The field is `provider_id`, not `provider`, and `name` and `capabilities` are required.
+2. `capabilities` must be a list of **objects**. Passing `["chat","embeddings"]` gives a 500
+   with `AttributeError: 'str' object has no attribute 'get'` in the log.
+3. `capability_type` is **lowercase** on the way in (`chat`, `embeddings`, `vision`) and comes
+   back uppercase.
+4. `credentials` needs the **whole** service account document. Sending only the three
+   `required_credentials` that `/api/v1/config/llm/providers` advertises gives
+   `Service account info was not in the expected format, missing fields token_uri`.
+
+Confirm with `GET /api/v1/config/llm/status`, which returns `{"is_configured":true}`.
+
+### Authentication, which is not where you would look
+
+SI's own login is `POST /api/v1/auth/login`, **form-encoded**, not JSON. JSON gives a 302 to
+`/?error=invalid_credentials`. There is no separate SI admin: SI authenticates against
+Composer using `COMPOSER_ADMIN_USERNAME` and `COMPOSER_ADMIN_PASSWORD`, sourced from secret
+`si-discovery-web`.
+
+A Composer session cookie cannot be reused for SI. Composer sets `SESSION` with
+`Path=/discovery`, so the browser will never send it to SI at `/`. They must share an origin
+through a gateway, and even then SI needs its own login.
+
+**This whole `/api/v1/auth/*` family is missing from the reverse-engineered OpenAPI spec:**
+`login`, `logout`, `token`, `check-auth`, `features`, `composer-session`. Anything that treats
+that spec as complete will wrongly conclude these endpoints do not exist.
