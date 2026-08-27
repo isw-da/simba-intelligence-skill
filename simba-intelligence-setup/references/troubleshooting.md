@@ -192,8 +192,11 @@ automatically, but newer Kubernetes versions (Oracle Kubernetes Engine / OKE
 first, others will follow) no longer do this.
 
 Symptoms: pods fail with `ImagePullBackOff` and the Events section shows an
-image path without a registry prefix (e.g. `insightsoftware/zoomdata-web`
-instead of `docker.io/insightsoftware/zoomdata-web`).
+image path without a registry prefix (e.g. `insightsoftware/zoomdata`
+instead of `docker.io/insightsoftware/zoomdata`). Corrected 2026-08-27: this
+example previously read `zoomdata-web`, which is not a real repository. Docker
+Hub returns "object not found" for it, so the illustration named an image that
+could never pull for a second, unrelated reason.
 
 This affects both the SI chart and the Composer/Discovery subcharts.
 Engineering is working on fully qualified paths across all images — expected

@@ -54,14 +54,14 @@ Pull each required image and save to a tar archive:
 ```bash
 # Example — repeat for each image identified above
 docker pull insightsoftware/simba-intelligence-chart:<VERSION>
-docker pull insightsoftware/zoomdata-web:<VERSION>
+docker pull insightsoftware/zoomdata:<VERSION>
 docker pull insightsoftware/zoomdata-query-engine:<VERSION>
 # ... all other images
 
 # Save all to a single archive
 docker save -o simba-images.tar \
   insightsoftware/simba-intelligence-chart:<VERSION> \
-  insightsoftware/zoomdata-web:<VERSION> \
+  insightsoftware/zoomdata:<VERSION> \
   insightsoftware/zoomdata-query-engine:<VERSION>
   # ... all other images
 ```
@@ -196,3 +196,20 @@ helm upgrade si ./simba-intelligence-chart-<NEW_VERSION>.tgz \
   -f simba-values.yaml \
   --namespace simba-intel
 ```
+
+
+## Image-name corrections, verified 2026-08-27
+
+Two names in an earlier version of this guide did not resolve, so an air-gapped install
+following it shipped without the application.
+
+- `insightsoftware/zoomdata-web` does not exist. Docker Hub returns "object not found". The
+  real repository is `insightsoftware/zoomdata`.
+- `insightsoftware/simba-intelligence-chart` is a **Helm OCI artefact**
+  (`application/vnd.cncf.helm.config.v1+json`), not a runnable container image. `docker pull`
+  of it produces something that cannot be run. Pull it with `helm pull oci://...` and treat
+  the images inside the chart's values as the list to mirror.
+
+Before trusting any image list here, resolve every entry against the registry first. A name
+that 404s is silent at bundle time and only surfaces on the air-gapped side, which is the
+worst possible place to find it.

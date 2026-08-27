@@ -110,7 +110,7 @@ Simba Intelligence consists of three routable web components:
 2. **Discovery Web** (service port **9050**) — serves the `/discovery/*`
    path. The main app depends on this for login, data exploration, and
    query engine routing.
-3. **MCP Server** (service port **8000**) — serves the `/mcp/*` path.
+3. **MCP Server** (service port **8001**) serves the `/mcp/*` path. Verified live on 26.2.1, 2026-08-27: `kubectl get svc si-simba-intelligence-chart-mcp` reports 8001. An earlier version of this file said 8000 and contradicted `references/si-26.2-release.md`. Note also that the nginx sidecar is gone in 26.2, so the MCP pod is 1/1 rather than 2/2.
    Handles model context protocol requests.
 
 Supporting services: Celery worker, Celery beat scheduler,
@@ -124,7 +124,7 @@ This is always a routing problem, not an authentication problem.
 When setting up ingress, ensure all three paths are routed:
 - `/` → main app (port 5050)
 - `/discovery/*` → Discovery web (port 9050)
-- `/mcp/*` → MCP server (port 8000)
+- `/mcp/*` → MCP server (port 8001)
 
 ---
 
