@@ -42,26 +42,36 @@ of it is instructions and scripts rather than a running service. Copy the checko
 | `demo-prep/` | The narrated walkthrough video pipeline: annotate screens, generate narration, stitch a synced mp4 |
 | `si-demo-env/` | Scaffolding a throwaway SI demo environment, with a Caddy gateway in front |
 | `use-cases/debit-order-payments/` | One worked use case end to end: data shape, derived fields, tenant rules, question bank, demo flow |
+| `mcp-server/` | A small MCP server that serves the setup guides and install scripts to Claude Desktop as tools, so the reference content does not have to be uploaded by hand |
 
-The `universal/simba-intelligence-llm-guide.md` file is the same setup knowledge written for
+The `simba-intelligence-setup/universal/simba-intelligence-llm-guide.md` file is the same setup knowledge written for
 LLM clients that are not Claude.
 
 ## How to trust what you read here
 
 One gate, runnable from a fresh clone with no Kubernetes, no SI and no network:
+`pyyaml` is optional; without it the frontmatter parse check reports NOT APPLICABLE
+rather than passing quietly.
 
 ```bash
 python3 verify-skill.py
 echo $?                 # on its own line: a pipe reports the pipe's status, not the gate's
 ```
 
-It runs four named checks and prints each one: every `SKILL.md` parses with a `name` and a
-`description` (without them the skill never loads), every tracked Python script compiles,
-every tracked shell script parses under `bash -n` (an install script that fails on syntax
-fails on somebody else's machine, which is the worst place to find out), and every citation
-that unambiguously points inside this repo resolves. It was proved by breaking it: the
-citation check found a guide pointing at `simba-intelligence-setup/scripts/apply_rules.py`,
-a script that does not exist, and went red until that was fixed.
+It runs five named checks and prints each one: every `SKILL.md` carries a `name` and a
+`description` (without them the skill never loads), every frontmatter block loads as YAML
+(greppable keys inside an unparseable block is exactly the failure that looks fine), every
+tracked Python script compiles, every tracked shell script parses under `bash -n` (an install
+script that fails on syntax fails on somebody else's machine, which is the worst place to
+find out), and every citation that unambiguously points inside this repo resolves.
+
+Each check was proved by breaking it. The citation check found a guide pointing at
+`simba-intelligence-setup/scripts/apply_rules.py`, a script that does not exist. A fresh
+reviewer then broke the first version of the same check by renaming a reference guide out
+from under the `SKILL.md` that cites it, and it stayed green, because it only looked at
+markdown links and this repo cites its guides as bare paths. It now checks 50 citations
+rather than 2, and catches that rename. The frontmatter check was likewise regex-only until
+the same reviewer put an unterminated quote in a block whose keys still grepped clean.
 
 Some checks report **NOT APPLICABLE** rather than passing or failing. That means the thing
 they check is real but not present in your checkout. A skip is always named and counted,

@@ -2,7 +2,7 @@
 
 Skills that guide an LLM through installing, configuring, testing and demoing **Simba
 Intelligence** (SI) on any Kubernetes environment. Written for Claude Code, and usable from
-ChatGPT, Gemini or any other client through `universal/simba-intelligence-llm-guide.md`.
+ChatGPT, Gemini or any other client through `simba-intelligence-setup/universal/simba-intelligence-llm-guide.md`.
 
 Repo: https://github.com/isw-da/simba-intelligence-skill
 
@@ -23,6 +23,7 @@ install, and anyone testing whether an NLQ answer can be trusted.
 | `demo-prep/` | The narrated walkthrough video pipeline: annotate screens, generate narration, stitch a synced mp4 |
 | `si-demo-env/` | Scaffold a throwaway SI demo environment behind a Caddy gateway |
 | `use-cases/debit-order-payments/` | One worked use case end to end: data shape, derived fields, tenant rules, question bank, demo flow |
+| `mcp-server/` | A small MCP server that serves the setup guides and install scripts to Claude Desktop as tools, so the reference content does not have to be uploaded by hand |
 
 ## Using it
 
@@ -45,9 +46,11 @@ python3 verify-skill.py
 echo $?
 ```
 
-Four named checks, all runnable from a fresh clone with no cluster and no network: skill
-frontmatter parses, Python compiles, shell parses, and every repo-internal citation resolves.
-Every tagged release runs it before the release is cut.
+Five named checks, all runnable from a fresh clone with no cluster and no network: skill
+frontmatter carries the keys it needs, the frontmatter loads as YAML, Python compiles, shell
+parses, and every repo-internal citation resolves. `pyyaml` is optional; without it the parse
+check reports NOT APPLICABLE by name rather than passing quietly. Every tagged release runs
+the gate before the release is cut.
 
 ## See also
 

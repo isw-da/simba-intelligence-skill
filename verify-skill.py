@@ -16,9 +16,10 @@ shrinking it. Never lower it to make a run green.
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-MIN_CHECKS = 4
+MIN_CHECKS = 5
 CHECK_MANIFEST = [
-    "skill_frontmatter_valid",
+    "skill_frontmatter_keys",
+    "skill_frontmatter_parses",
     "python_scripts_compile",
     "shell_scripts_parse",
     "relative_path_citations_resolve",
@@ -41,24 +42,55 @@ def tracked(pattern):
 
 
 def check_frontmatter():
+    """Two checks, because they fail differently.
+
+    The keys check is a regex and always runs. The parse check needs pyyaml and
+    reports NOT APPLICABLE without it, named and counted.
+
+    A fresh reviewer broke the first version of this in one move: an unterminated
+    quote in the frontmatter made the block unloadable while `name:` and
+    `description:` were still greppable, so the gate stayed green on a skill that
+    could never load. Grepping for a key is not parsing.
+    """
     files = [f for f in tracked("*.md") if os.path.basename(f) == "SKILL.md"]
     if not files:
-        record("skill_frontmatter_valid", None, "no SKILL.md in the checkout")
+        record("skill_frontmatter_keys", None, "no SKILL.md in the checkout")
+        record("skill_frontmatter_parses", None, "no SKILL.md in the checkout")
         return
-    bad = []
+
+    blocks, bad = {}, []
     for f in files:
         body = open(os.path.join(ROOT, f), encoding="utf-8").read()
         m = re.match(r"---\n(.*?)\n---\n", body, re.S)
         if not m:
             bad.append("%s: no frontmatter block" % f)
             continue
-        fm = m.group(1)
+        blocks[f] = m.group(1)
         for key in ("name", "description"):
-            if not re.search(r"^%s:\s*\S" % key, fm, re.M):
+            if not re.search(r"^%s:\s*\S" % key, blocks[f], re.M):
                 bad.append("%s: frontmatter has no %s" % (f, key))
-    record("skill_frontmatter_valid", not bad,
+    record("skill_frontmatter_keys", not bad,
            "%d problems: %s" % (len(bad), bad[:3]) if bad
            else "%d SKILL.md files, each with name and description" % len(files))
+
+    try:
+        import yaml
+    except ImportError:
+        record("skill_frontmatter_parses", None,
+               "pyyaml not installed; python3 -m pip install pyyaml to run this check")
+        return
+    unloadable = []
+    for f, block in blocks.items():
+        try:
+            data = yaml.safe_load(block)
+        except Exception as e:
+            unloadable.append("%s: %s" % (f, str(e).splitlines()[0][:80]))
+            continue
+        if not isinstance(data, dict):
+            unloadable.append("%s: frontmatter is not a mapping" % f)
+    record("skill_frontmatter_parses", not unloadable,
+           "%d unloadable: %s" % (len(unloadable), unloadable[:3]) if unloadable
+           else "%d frontmatter blocks load as YAML mappings" % len(blocks))
 
 
 def check_python():
@@ -101,11 +133,19 @@ def check_shell():
 def check_links():
     """Only citations that unambiguously point inside this repo.
 
-    A markdown link target, or a path written with ./ or ../. Bare paths in
-    prose are excluded on purpose: this repo cites files that live in other
-    repos and inside the SI container image, and demanding those resolve
-    produced ten false positives against one real defect. A gate that cries
-    wolf gets ignored, which is worse than not having it.
+    Three shapes qualify: a markdown link target, a path written with ./ or ../,
+    and a bare path beginning `references/` or `universal/`, which in this repo
+    can only mean a skill's own directory.
+
+    Everything else in prose is excluded on purpose: this repo cites files that
+    live in other repos (`composer-mcp/README.md`) and inside the SI container
+    image (`services/redis_service.py`), and demanding those resolve produced ten
+    false positives against one real defect. A gate that cries wolf gets ignored.
+
+    The first version excluded ALL bare paths, which made it near-vacuous: a
+    fresh reviewer renamed `si-analytics-agent/references/validation.md` out from
+    under the SKILL.md that cites it and the gate stayed green. That citation is
+    the whole reason this check exists, so `references/` is back in.
 
     Citations are resolved against the citing file's directory, against any
     ancestor holding a SKILL.md (skills cite their own references/ folder from
@@ -116,7 +156,12 @@ def check_links():
         record("relative_path_citations_resolve", None, "no markdown in the checkout")
         return
     link = re.compile(r"\]\((?!https?://|mailto:|#)([^)]+)\)")
-    rel = re.compile(r"(?<![A-Za-z0-9_./-])((?:\./|\.\./)[A-Za-z0-9_./-]*"
+    # `references/x.md`, `universal/x.md`, and the same two written with the
+    # skill directory in front. Anchored so a longer path ending in one of them
+    # is matched whole rather than from the middle.
+    rel = re.compile(r"(?<![A-Za-z0-9_./-])("
+                     r"(?:(?:\./|\.\./)[A-Za-z0-9_./-]*"
+                     r"|(?:[A-Za-z0-9_-]+/)?(?:references|universal)/[A-Za-z0-9_./-]*)"
                      r"\.(?:md|py|sh|ps1|bat|command|json|yaml|yml))")
 
     def roots(f):
@@ -150,7 +195,7 @@ def check_links():
 
 
 print("SIMBA INTELLIGENCE SKILL GATE")
-check_frontmatter()
+check_frontmatter()   # two checks
 check_python()
 check_shell()
 check_links()
