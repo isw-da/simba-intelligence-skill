@@ -121,7 +121,7 @@ Output is the new source ID. Capture it.
 ### Step 2: apply rules
 
 ```bash
-python3 ../../simba-intelligence-setup/scripts/apply_rules.py \
+python3 ./apply-rules.py \
   --base https://<si-host> \
   --key <your-api-key>
 ```
