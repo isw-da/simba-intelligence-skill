@@ -66,7 +66,13 @@ jobs:
             else
               echo "First tagged release."
               echo ""
-              git log --no-merges --pretty='- %s' | head -25
+              # The same SIGPIPE trap as above, and it is not theoretical:
+              # head -25 closes the pipe on any repo with more than 25
+              # commits, git log dies with SIGPIPE, and pipefail turns a
+              # correct set of notes into exit 141. It killed the first
+              # release of simba-intelligence-skill, which has 55 commits.
+              git log --no-merges --pretty='- %s' > /tmp/all.txt || true
+              head -25 /tmp/all.txt
             fi
             echo ""
             echo "## Consuming this"
