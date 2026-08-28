@@ -29,6 +29,14 @@ jobs:
         with:
           python-version: '3.12'
 
+      # The frontmatter check parses YAML rather than grepping for keys, so
+      # pyyaml is what turns it from NOT APPLICABLE into a real check.
+      - name: Install what the gates need
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml
+
       - name: Run every gate in the repo
         run: |
           set -euo pipefail
