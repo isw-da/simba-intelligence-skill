@@ -30,8 +30,9 @@ If neither of the above is possible, accept that:
 We investigated both. Neither works reliably on this SI build:
 
 - **Derived Field API**: returns HTTP 500 NullPointerException on
-  every attempted shape. Bug filed; see
-  `simba-intelligence-setup/references/audit-the customer-bugs.md` #14.
+  every attempted shape. Bug filed as #14 in the engagement bug log,
+  which was removed when this material was anonymised and is not
+  published here.
 - **Custom SQL Entity**: structurally works but NLQ against it
   returns aggressively sampled/filtered results (off by ~6000x on a
   bare SUM in our test). Bug filed; see #15.

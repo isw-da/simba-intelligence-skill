@@ -5,7 +5,7 @@ Apply these renames, descriptions and hide flags to each table's `nativeFields` 
 ## Source-level
 
 - **Name**: `the customer Branch Performance (VDD demo)`
-- **Description**: "Demo data source over a local sample of the customer's debit-order data, for building and testing the semantic layer before porting to the the customer tenant."
+- **Description**: "Demo data source over a local sample of the customer's debit-order data, for building and testing the semantic layer before porting to the customer's tenant."
 
 ## Table 1: `branch` → data entity label "Branches"
 

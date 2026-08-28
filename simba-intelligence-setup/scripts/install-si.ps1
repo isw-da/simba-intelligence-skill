@@ -67,7 +67,7 @@ Write-Info "Helm is installed"
 $ChartVersion = $env:CHART_VERSION
 if (-not $ChartVersion) {
     Write-Host ""
-    $ChartVersion = Read-Host "Enter the chart version to install (e.g. 25.4.0)"
+    $ChartVersion = Read-Host "Enter the chart version to install (e.g. 26.2.1)"
 }
 if (-not $ChartVersion) {
     Write-Err "Chart version is required. Find versions at https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags"

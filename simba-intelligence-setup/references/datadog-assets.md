@@ -18,7 +18,7 @@ Search: `https://isw-nonprod.datadoghq.com/dashboard/lists?q=logi`
 
 | Name | Owner | Team | Type | URL |
 |---|---|---|---|---|
-| LogiSymphony-Dev | Tata Reddy | LogiSymphony | Custom (shared) | [`/dashboard/r2b-jd2-rqg/logisymphony-dev`](https://isw-nonprod.datadoghq.com/dashboard/r2b-jd2-rqg/logisymphony-dev) |
+| LogiSymphony-Dev | (owned inside the LogiSymphony team) | LogiSymphony | Custom (shared) | [`/dashboard/r2b-jd2-rqg/logisymphony-dev`](https://isw-nonprod.datadoghq.com/dashboard/r2b-jd2-rqg/logisymphony-dev) |
 | Azure Logic App | Datadog | (integration) | Integration | n/a |
 
 The LogiSymphony-Dev dashboard is **generic Kubernetes / host metrics**

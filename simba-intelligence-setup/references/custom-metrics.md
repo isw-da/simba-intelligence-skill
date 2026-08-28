@@ -122,7 +122,7 @@ CUSTOM_METRICS = [
 ]
 ```
 
-Test results against the the customer demo data:
+Test results against the customer's demo data:
 
 | Question | Truth | NLQ answer | Match |
 |---|---|---|---|
@@ -173,5 +173,6 @@ to refuse to do). The metric is a real, named field; the LLM uses it.
 - `platform-only-modelling.md` — the customer-tenant deployment path
 - `use-cases/debit-order-payments/sql-templates.py` — the metrics
   applied to the debit-order use case
-- `audit-the customer-bugs.md` — earlier entries on broken
-  `nativeFields.origin.type=DERIVED` are now superseded by this doc
+- The engagement bug log (removed when this material was anonymised, not
+  published here) held earlier entries on broken
+  `nativeFields.origin.type=DERIVED`. This doc supersedes them.

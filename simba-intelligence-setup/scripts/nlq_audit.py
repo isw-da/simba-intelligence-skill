@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cell-level audit script for the the customer SI demo source.
+Cell-level audit script for the customer's SI demo source.
 
 Randomly samples N source rows from Postgres, asks SI an equivalent
 NLQ question for each, and compares the answers within tolerance.

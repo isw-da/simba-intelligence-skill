@@ -53,7 +53,7 @@ REM --- Chart version ---
 echo.
 echo Find versions at: https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags
 echo.
-set /p CHART_VERSION="Chart version to install (e.g. 25.4.0): "
+set /p CHART_VERSION="Chart version to install (e.g. 26.2.1): "
 if "%CHART_VERSION%"=="" (
     echo [X] Version is required.
     pause

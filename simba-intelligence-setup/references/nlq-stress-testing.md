@@ -277,7 +277,7 @@ question.
 
 ---
 
-## What we saw on the the customer demo source
+## What we saw on the customer's demo source
 
 Run on 2026-05-19 against the three single-fact sources
 (Branch Performance, Monthly Dues, Fee Statistics):

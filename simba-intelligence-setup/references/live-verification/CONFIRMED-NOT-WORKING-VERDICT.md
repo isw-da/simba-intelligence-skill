@@ -5,7 +5,7 @@ install (Composer as the `discovery` subchart, kind cluster). The SDK was fetche
 running instance at `/discovery/embed/embed.js`, 44,422 bytes, served unauthenticated, and
 saved as `embed-26.2.1.js`.
 
-Source of the claims: `Logi-Composer-Symphony-Embedding-Reference.md:643-646`, section
+Source of the claims: Peter Armstrong's `Logi-Composer-Symphony-Embedding-Reference.md:643-646`, section
 headed "Still confirmed not working". None of the three carried a date, and the same section
 retracts an earlier claim of his own at `:641` marked "Previously incorrect documentation",
 so the list needed retesting before reuse.

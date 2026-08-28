@@ -9,7 +9,7 @@ For local POC and development using Docker Desktop Kubernetes or kind.
 Find available versions at:
 https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags
 
-Choose semantic versioning tags (e.g. `25.4.0`). Avoid `latest`, `main`, or `dev`.
+Choose semantic versioning tags (e.g. `26.2.1`). Avoid `latest`, `main`, or `dev`.
 
 ---
 

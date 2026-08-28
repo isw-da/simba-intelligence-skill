@@ -81,8 +81,8 @@ cross-referencing the cluster's `aws_account` and AZ in log metadata.
 
 | Public URL | DNS target | Cluster (`kube_cluster_name`) | Pod prefix | AWS account | Region |
 |---|---|---|---|---|---|
-| `<si-host>` | `k8s-simba-simbasim-218e14a15a-*.us-east-2.elb.amazonaws.com` | `preview-eks-cluster` | `previewmain-simbaintelligence-*` | 151662208362 | us-east-2 |
-| `simbaintel.logianalytics.com` | `<id>4308bd1e-*.us-east-1.elb.amazonaws.com` | `qa2-eks-cluster` | `si2-simba-intelligence-chart-*` | 731970931268 | us-east-1 |
+| `<si-host>` | `k8s-simba-simbasim-218e14a15a-*.us-east-2.elb.amazonaws.com` | `preview-eks-cluster` | `previewmain-simbaintelligence-*` | `<aws-account-id>` | us-east-2 |
+| `simbaintel.logianalytics.com` | `<id>4308bd1e-*.us-east-1.elb.amazonaws.com` | `qa2-eks-cluster` | `si2-simba-intelligence-chart-*` | `<aws-account-id>` | us-east-1 |
 | `isw.logisymphony.com` | `34.54.16.145` (GCP, `via: 1.1 google`) | not in Isw-Nonprod | n/a | n/a | GCP |
 
 Notes:

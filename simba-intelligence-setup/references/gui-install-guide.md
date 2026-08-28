@@ -94,7 +94,7 @@ browser.
 ### Find your chart version
 
 Go to https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags
-and note the latest version number (e.g. `25.4.0`). You will be asked for
+and note the latest version number (e.g. `26.2.1`, the newest verified as of 27 August 2026). You will be asked for
 this when the script runs.
 
 ### Windows

@@ -52,7 +52,7 @@ info "Helm is installed"
 echo ""
 echo "Find versions at: https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags"
 echo ""
-read -rp "Chart version to install (e.g. 25.4.0): " CHART_VERSION
+read -rp "Chart version to install (e.g. 26.2.1): " CHART_VERSION
 [ -z "$CHART_VERSION" ] && fail "Version is required."
 
 # --- Port check ---

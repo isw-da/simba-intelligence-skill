@@ -56,7 +56,7 @@ info "kubectl installed"
 # --- Step 2: Get chart version ---
 if [ -z "${CHART_VERSION:-}" ]; then
   echo ""
-  read -rp "Enter SI chart version (e.g. 25.4.0): " CHART_VERSION
+  read -rp "Enter SI chart version (e.g. 26.2.1): " CHART_VERSION
 fi
 [ -z "$CHART_VERSION" ] && error "Chart version is required."
 info "Chart version: $CHART_VERSION"

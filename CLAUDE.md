@@ -12,8 +12,13 @@ The canonical doc corpus lives in `isw-da/logi-si-docs`:
   and all SI product behaviour)
 - Composer current docs: `logi-composer-current/v25/` and `v26/`
   (live v25/v26 product docs; the devnet Zendesk covers only legacy v5/v6)
-- Composer OpenAPI: `composer-api/composer-openapi.json`
-  (220 paths, 338 ops; also covers SI Discovery — the backends are identical)
+- Composer OpenAPI: `composer-api/composer-openapi.json`, currently the SI-bundled
+  26.2.1 pull at 223 paths and 344 operations. The mirror also keeps
+  `composer-api/composer-openapi-simba-logisymphony.json`, the hosted pull, at 220
+  paths and 338 operations. The two disagree, because an OpenAPI document describes
+  the instance that served it rather than the product, so confirm an endpoint against
+  the instance in front of you before promising it. Both cover SI Discovery, which is
+  served by the Composer backend.
 - Composer endpoint index: `composer-api/ENDPOINTS.md`
 
 Clone it locally when you need to work from these docs:

@@ -76,7 +76,7 @@ info "Helm is installed"
 # --- Step 2: Get chart version ---
 if [ -z "${CHART_VERSION:-}" ]; then
   echo ""
-  read -rp "Enter the chart version to install (e.g. 25.4.0): " CHART_VERSION
+  read -rp "Enter the chart version to install (e.g. 26.2.1): " CHART_VERSION
 fi
 if [ -z "$CHART_VERSION" ]; then
   error "Chart version is required. Find versions at https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags"

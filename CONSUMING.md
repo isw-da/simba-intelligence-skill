@@ -25,7 +25,7 @@ Every repo cuts tagged releases. The default branch moves, sometimes several tim
 and it moves because something turned out to be wrong. Pin unless you want that.
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/isw-da/simba-intelligence-skill.git
+git clone --branch v0.3.1 --depth 1 https://github.com/isw-da/simba-intelligence-skill.git
 ```
 
 Release notes name what changed and, where it matters, what was found to be **wrong** in the
@@ -33,8 +33,8 @@ previous version. That second part is the useful one.
 
 ## What this repo holds
 
-Four skills (each with a `SKILL.md`), two script toolkits, and one worked use case. All
-of it is instructions and scripts rather than a running service. Copy the checkout into `~/.claude/skills/`, or point any LLM session at the
+Four skills (each with a `SKILL.md`), two script toolkits, an MCP server and one worked use
+case. All of it is instructions and scripts rather than a running service. Copy the checkout into `~/.claude/skills/`, or point any LLM session at the
 `SKILL.md` you need.
 
 | Directory | What it is for |
@@ -62,20 +62,25 @@ python3 verify-skill.py
 echo $?                 # on its own line: a pipe reports the pipe's status, not the gate's
 ```
 
-It runs five named checks and prints each one: every `SKILL.md` carries a `name` and a
+It runs six named checks and prints each one: every `SKILL.md` carries a `name` and a
 `description` (without them the skill never loads), every frontmatter block loads as YAML
 (greppable keys inside an unparseable block is exactly the failure that looks fine), every
 tracked Python script compiles, every tracked shell script parses under `bash -n` (an install
 script that fails on syntax fails on somebody else's machine, which is the worst place to
-find out), and every citation that unambiguously points inside this repo resolves.
+find out), every citation that unambiguously points inside this repo resolves, and no
+tracked file matches one of seven credential or account-identifier shapes (this repo is
+public, so a secret committed here is a secret published).
 
 Each check was proved by breaking it. The citation check found a guide pointing at
 `simba-intelligence-setup/scripts/apply_rules.py`, a script that does not exist. A fresh
 reviewer then broke the first version of the same check by renaming a reference guide out
 from under the `SKILL.md` that cites it, and it stayed green, because it only looked at
-markdown links and this repo cites its guides as bare paths. It now checks 50 citations
+markdown links and this repo cites its guides as bare paths. It now checks 51 citations
 rather than 2, and catches that rename. The frontmatter check was likewise regex-only until
-the same reviewer put an unterminated quote in a block whose keys still grepped clean.
+the same reviewer put an unterminated quote in a block whose keys still grepped clean. The
+secret check was proved the same way and not hypothetically: pointed at the tree as it stood
+before the check was written, it went red on two AWS account identifiers sitting in a table
+of cluster metadata.
 
 Some checks report **NOT APPLICABLE** rather than passing or failing. That means the thing
 they check is real but not present in your checkout. A skip is always named and counted,
@@ -87,9 +92,11 @@ If a gate is red, the documentation is wrong, not the gate.
 
 - **No cluster, no credentials, no kubeconfig.** Every script takes a host and a key as
   arguments. Nothing here authenticates anywhere by itself, and no secret is committed.
-- **No customer names, deployed customer artefacts, or NDA-tagged material.** The
-  `use-cases/debit-order-payments/` data shape is synthetic and modelled on a pattern, not
-  copied from a deployment.
+- **No customer names.** The `use-cases/debit-order-payments/` material is not synthetic:
+  it came out of a 2026 engagement and was anonymised afterwards. The customer is not named
+  and no rows of their data are here, but the source shape is theirs, and so are the
+  aggregate figures the walkthrough checks its answers against. Treat it as a worked example
+  rather than as invented data, and say so if any of it sits too close.
 - **No SI product source, and no Helm chart.** Those come from insightsoftware's own
   distribution. This repo tells you how to drive them.
 - **No demo assets.** `demo-assets/` is gitignored: video, audio and screen captures are

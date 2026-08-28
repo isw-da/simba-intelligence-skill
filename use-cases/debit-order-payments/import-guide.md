@@ -4,7 +4,7 @@ How to deploy the debit-order-payments semantic model in a customer
 tenant **without touching their underlying data**, and without
 overloading their compute.
 
-Verified 2026-05-19 against the the customer VDD demo, producing 92% NLQ
+Verified 2026-05-19 against the customer's VDD demo, producing 92% NLQ
 pass rate (11/12 exact match) on first run.
 
 ---
@@ -96,7 +96,7 @@ If compute is tight, mitigate as follows:
 
 ### Prerequisite: connection already configured
 
-The the customer Fabric Lakehouse connection is at
+The customer's Fabric Lakehouse connection is at
 `/discovery/api/connections/<id>`. Capture the `id` from the SI
 Connections page. We'll refer to it as `<CONN_ID>`.
 

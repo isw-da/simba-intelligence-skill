@@ -87,8 +87,9 @@ entity.
 
 ## Questions to avoid (or rephrase before asking)
 
-These have known reliability issues. The reasons are documented in
-`audit-the customer-qa-results-v3.md`.
+These have known reliability issues. The reasons were documented in the
+engagement QA audit, which was removed when this material was anonymised
+and is not published here.
 
 | Don't ask | Why | Rephrase as |
 |---|---|---|

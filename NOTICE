@@ -1,0 +1,66 @@
+NOTICE
+======
+
+This repository mixes material with two different owners, which is why it
+carries a NOTICE rather than a conventional open-source licence. Applying MIT
+or Apache here would purport to grant rights over documentation that is not
+mine to grant.
+
+Original work
+-------------
+The skills (`simba-intelligence-setup/`, `si-analytics-agent/`, `nlq-testing/`,
+`edc-connector-testing/`), the reference guides under
+`simba-intelligence-setup/references/`, the install scripts for macOS, Windows
+and Linux, the `demo-prep/` and `si-demo-env/` toolkits, the `mcp-server/`, the
+`use-cases/` material and the gate at the repository root were written by Amin Hasan
+as insightsoftware work. Colleagues are welcome to clone, fork, pin and open
+issues.
+
+insightsoftware material
+------------------------
+Simba Intelligence, Logi Composer, Logi Report and Dundas are insightsoftware
+products. The facts recorded here about chart values, API shapes, endpoint
+behaviour, error semantics, EDC configuration and release contents are derived
+from insightsoftware's own documentation (the product docs, Confluence and Jira,
+each cited where it is used) and from running instances. That underlying
+documentation remains insightsoftware's and is not relicensed by anything in
+this repository. Nothing here is an insightsoftware product statement, a support
+commitment, or a roadmap.
+
+No product source and no distribution
+-------------------------------------
+The SI Helm chart, the container images and the product source are not in this
+repository and are not redistributed by it. They come from insightsoftware's own
+distribution, and this repository only tells you how to drive them.
+
+Attribution
+-----------
+`simba-intelligence-setup/references/live-verification/BASIC-AUTH-VERDICT.md`
+and `CONFIRMED-NOT-WORKING-VERDICT.md` are the settlement of claims made by
+Peter Armstrong (insightsoftware) in his own Composer embedding reference. Each
+file names him, the date, and the source file and line rather than relying on a
+blanket credit here.
+
+Not here
+--------
+No credential, API key, licence key, kubeconfig or cluster is committed. Every
+script takes its host and its key as arguments and authenticates nothing by
+itself.
+
+The `use-cases/debit-order-payments/` material came out of a 2026 engagement and
+was then anonymised. The customer is not named anywhere in the working tree, and
+no rows of their data are included. What is reproduced is the shape of the
+source: table and column names, the semantic-layer plan built over them, and the
+aggregate figures the answers were checked against, kept because a walkthrough
+whose expected answers are invented teaches nothing. Read it as a worked example
+of the modelling, not as a synthetic dataset. If any of it is closer to the
+customer than it should be, say so and it comes out.
+
+Some reference guides record observations made against insightsoftware's own
+non-production environments. Cluster names, dashboard identifiers and Confluence
+and Jira keys appear where they are needed as evidence; all of them sit behind
+insightsoftware authentication and none of them grants access.
+
+Contact
+-------
+Contact a@hasan.co if something here should not be public, and it comes out.

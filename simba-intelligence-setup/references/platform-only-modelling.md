@@ -215,5 +215,5 @@ data-side changes. They just won't fix structural data problems.
 - `data-source-modelling.md` — recipe for single-collection sources
 - `nlq-stress-testing.md` — the 25-test audit methodology
 - `best-practices-data-sources.md` — prompting and setup guidance
-- `audit-the customer-bugs.md` — bug log including the Custom SQL and
-  Derived Field issues
+- The engagement bug log covering the Custom SQL and Derived Field issues
+  was removed when this material was anonymised and is not published here.

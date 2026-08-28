@@ -30,11 +30,15 @@ install, and anyone testing whether an NLQ answer can be trusted.
 Pin a tag rather than tracking `main`:
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/isw-da/simba-intelligence-skill.git
+git clone --branch v0.3.1 --depth 1 https://github.com/isw-da/simba-intelligence-skill.git
 ```
 
 Then either copy the directories you want into `~/.claude/skills/`, or point a session at the
 relevant `SKILL.md`. Start with `simba-intelligence-setup/SKILL.md` if you are installing.
+
+[`NOTICE`](NOTICE) says who owns what in here, and what is deliberately absent. There is no
+MIT or Apache licence, because most of what this records is derived from insightsoftware's own
+documentation and is not mine to relicense.
 
 **[`CONSUMING.md`](CONSUMING.md)** has the full picture: how to pin, how to run the gate,
 what is deliberately not in here, and how to contribute.
@@ -46,9 +50,10 @@ python3 verify-skill.py
 echo $?
 ```
 
-Five named checks, all runnable from a fresh clone with no cluster and no network: skill
+Six named checks, all runnable from a fresh clone with no cluster and no network: skill
 frontmatter carries the keys it needs, the frontmatter loads as YAML, Python compiles, shell
-parses, and every repo-internal citation resolves. `pyyaml` is optional; without it the parse
+parses, every repo-internal citation resolves, and no tracked file carries a credential or an
+account identifier of the shapes a public repo must never publish. `pyyaml` is optional; without it the parse
 check reports NOT APPLICABLE by name rather than passing quietly. Every tagged release runs
 the gate before the release is cut.
 

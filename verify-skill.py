@@ -16,13 +16,14 @@ shrinking it. Never lower it to make a run green.
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-MIN_CHECKS = 5
+MIN_CHECKS = 6
 CHECK_MANIFEST = [
     "skill_frontmatter_keys",
     "skill_frontmatter_parses",
     "python_scripts_compile",
     "shell_scripts_parse",
     "relative_path_citations_resolve",
+    "no_published_secrets",
 ]
 
 results = []
@@ -194,11 +195,62 @@ def check_links():
            else "%d citations across %d files all resolve" % (count, len(files)))
 
 
+SECRET_PATTERNS = {
+    # An AWS account id is not a credential, but it is the thing that makes a
+    # targeted attempt on an account possible, and two of them were published
+    # here in a table of cluster metadata before anybody looked.
+    "aws account id": r"(?<![\d.])\d{12}(?![\d.])",
+    "aws access key id": r"AKIA[0-9A-Z]{16}",
+    "github token": r"gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}",
+    "slack token": r"xox[baprs]-[A-Za-z0-9-]{10,}",
+    "google api key": r"AIza[0-9A-Za-z_\-]{35}",
+    "openai key": r"\bsk-[A-Za-z0-9]{20,}",
+    "private key block": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
+}
+
+
+def check_secrets():
+    """This repo is public, so a secret committed here is a secret published.
+
+    Only shapes that are unambiguous are matched. Placeholders (`<password>`,
+    `$AZURE_OPENAI_API_KEY`) are the normal way this repo writes a credential
+    and must stay green, so nothing keyed on the word "password" is in here.
+
+    Skipped: uv.lock, whose wheel hashes are long hex by design, and this file,
+    which contains the patterns themselves.
+    """
+    files = [f for f in tracked("*")
+             if os.path.isfile(os.path.join(ROOT, f))
+             and os.path.basename(f) not in ("uv.lock", "verify-skill.py")]
+    if not files:
+        record("no_published_secrets", None, "no tracked files to scan")
+        return
+    hits, scanned = [], 0
+    for f in files:
+        try:
+            body = open(os.path.join(ROOT, f), encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue          # binary or unreadable: nothing to match on
+        scanned += 1
+        for label, pattern in SECRET_PATTERNS.items():
+            m = re.search(pattern, body)
+            if m:
+                hits.append("%s:%d: %s" % (f, body[:m.start()].count("\n") + 1, label))
+    if scanned == 0:
+        record("no_published_secrets", None, "no readable text files to scan")
+        return
+    record("no_published_secrets", not hits,
+           "%d hits: %s" % (len(hits), hits[:3]) if hits
+           else "%d files scanned, %d patterns, no match"
+                % (scanned, len(SECRET_PATTERNS)))
+
+
 print("SIMBA INTELLIGENCE SKILL GATE")
 check_frontmatter()   # two checks
 check_python()
 check_shell()
 check_links()
+check_secrets()
 
 ran = {n for n, _, _ in results}
 missing = [n for n in CHECK_MANIFEST if n not in ran]
