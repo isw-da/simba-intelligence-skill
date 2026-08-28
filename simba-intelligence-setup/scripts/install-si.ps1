@@ -179,8 +179,15 @@ if ($elapsed -ge $timeout) {
 Write-Host ""
 Write-Host "Starting port-forwards and reverse proxy..."
 
-# Stop any existing Caddy
-docker ps -q --filter ancestor=caddy:2 2>$null | ForEach-Object { docker stop $_ 2>$null } | Out-Null
+# Stop only the Caddy container a previous run of this script started.
+# The old code stopped EVERY caddy:2 container on the host, including ones
+# belonging to unrelated projects.
+$CidFile = Join-Path $env:TEMP "simba-si-caddy.cid"
+if (Test-Path $CidFile) {
+    $OldCid = Get-Content $CidFile -ErrorAction SilentlyContinue
+    if ($OldCid) { docker stop $OldCid 2>$null | Out-Null }
+    Remove-Item $CidFile -ErrorAction SilentlyContinue
+}
 
 Start-Sleep -Seconds 2
 
@@ -196,7 +203,8 @@ $pf2 = Start-Job -ScriptBlock {
 Start-Sleep -Seconds 1
 
 # Start Caddy
-docker run --rm -d -p 8080:8080 -v "${CaddyFile}:/etc/caddy/Caddyfile" caddy:2 | Out-Null
+$CaddyCid = docker run --rm -d -p 8080:8080 -v "${CaddyFile}:/etc/caddy/Caddyfile" caddy:2
+Set-Content -Path $CidFile -Value $CaddyCid
 Start-Sleep -Seconds 3
 
 # Verify
@@ -229,7 +237,7 @@ Write-Host "    5. Query your data in the Playground"
 Write-Host ""
 Write-Host "  To stop:"
 Write-Host "    Stop-Job $($pf1.Id), $($pf2.Id); Remove-Job $($pf1.Id), $($pf2.Id)"
-Write-Host "    docker stop (docker ps -q --filter ancestor=caddy:2)"
+Write-Host "    docker stop (Get-Content \"$CidFile\")   # only this script's Caddy"
 Write-Host ""
 Write-Host "  To uninstall:"
 Write-Host "    helm uninstall $ReleaseName -n $Namespace"

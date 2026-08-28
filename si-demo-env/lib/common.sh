@@ -179,14 +179,38 @@ secrets_to_k8s() {
     && ok "si-demo-secrets applied (data-tier manifests can secretKeyRef it)"
 }
 
+# ---------- port-forward ownership ----------
+# One pidfile per namespace, so tearing down one demo cannot touch another.
+pf_pidfile() { printf '/tmp/si-demo-pf-%s.pids' "${NAMESPACE:-unset}"; }
+
+stop_own_forwards() {
+  local pf; pf="$(pf_pidfile)"
+  [ -f "$pf" ] || return 0
+  while read -r pid; do
+    [ -n "$pid" ] || continue
+    # Confirm the pid is still one of our port-forwards before signalling it.
+    if ps -p "$pid" -o command= 2>/dev/null | grep -q "port-forward"; then
+      kill "$pid" 2>/dev/null || true
+    fi
+  done < "$pf"
+  rm -f "$pf"
+}
+
 # ---------- access: port-forwards + caddy ----------
 access_up() {
   phase "access (port-forwards + Caddy :8080)"
-  pkill -f "port-forward.*$CHART_SVC" 2>/dev/null || true
-  pkill -f "port-forward.*$DISCO_SVC" 2>/dev/null || true
+  # Stop only the forwards a previous run of THIS demo started, recorded by
+  # namespace. The old code was `pkill -f "port-forward.*$CHART_SVC"`. Because
+  # RELEASE defaults to `si` in every demo, CHART_SVC is the same string
+  # everywhere, so bringing up one demo killed every other demo's forwards
+  # across namespaces and kube-contexts, and any unrelated port-forward to the
+  # same service on the machine.
+  stop_own_forwards
   sleep 1
   nohup kubectl -n "$NAMESPACE" port-forward "svc/$CHART_SVC" 8082:5050 >/tmp/pf-chart.log 2>&1 &
+  echo $! > "$(pf_pidfile)"
   nohup kubectl -n "$NAMESPACE" port-forward "svc/$DISCO_SVC" 8081:9050 >/tmp/pf-disc.log 2>&1 &
+  echo $! >> "$(pf_pidfile)"
   sleep 4
   local caddyfile="$_lib_dir/Caddyfile"
   docker rm -f si-demo-caddy >/dev/null 2>&1 || true

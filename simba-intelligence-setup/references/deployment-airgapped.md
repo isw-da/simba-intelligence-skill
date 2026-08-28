@@ -51,20 +51,42 @@ ls charts/
 
 Pull each required image and save to a tar archive:
 
+**Do not `docker pull` the chart.** `insightsoftware/simba-intelligence-chart`
+is a Helm OCI artefact, not a runnable image, and pulling it yields something
+that cannot start. The application image is `insightsoftware/simba-intelligence`.
+See the corrections section at the foot of this guide.
+
+Get the image list from the chart itself rather than typing it by hand:
+
 ```bash
-# Example — repeat for each image identified above
-docker pull insightsoftware/simba-intelligence-chart:<VERSION>
-docker pull insightsoftware/zoomdata:<VERSION>
-docker pull insightsoftware/zoomdata-query-engine:<VERSION>
+helm pull oci://docker.io/insightsoftware/simba-intelligence-chart --version <VERSION>
+
+helm template si ./simba-intelligence-chart-<VERSION>.tgz \
+  --namespace simba-intel --set ingress.enabled=false \
+  | grep -E "^\s+image:" | sed 's/.*image: *//' | tr -d '"' | sort -u
+```
+
+On 26.2.1 that yields thirteen images. Pull and archive exactly that list:
+
+```bash
+# Example — repeat for every image the command above printed
+docker pull insightsoftware/simba-intelligence:<SI_VERSION>
+docker pull insightsoftware/zoomdata:<COMPOSER_VERSION>
+docker pull insightsoftware/zoomdata-query-engine:<COMPOSER_VERSION>
 # ... all other images
 
 # Save all to a single archive
 docker save -o simba-images.tar \
-  insightsoftware/simba-intelligence-chart:<VERSION> \
-  insightsoftware/zoomdata:<VERSION> \
-  insightsoftware/zoomdata-query-engine:<VERSION>
+  insightsoftware/simba-intelligence:<SI_VERSION> \
+  insightsoftware/zoomdata:<COMPOSER_VERSION> \
+  insightsoftware/zoomdata-query-engine:<COMPOSER_VERSION>
   # ... all other images
 ```
+
+Note the two placeholders are different. The SI images and the Composer
+(`zoomdata-*`) images carry different tags in the same chart: 26.2.1 ships SI
+26.2.1 alongside Composer 26.2.0. Mirroring both under one version number
+will 404 on half the list.
 
 ### Transfer to disconnected environment
 
@@ -88,10 +110,10 @@ container registry:
 docker load -i simba-images.tar
 
 # Tag and push to internal registry
-docker tag insightsoftware/simba-intelligence-chart:<VERSION> \
-  registry.internal.company.com/simba/simba-intelligence-chart:<VERSION>
+docker tag insightsoftware/simba-intelligence:<SI_VERSION> \
+  registry.internal.company.com/simba/simba-intelligence:<SI_VERSION>
 
-docker push registry.internal.company.com/simba/simba-intelligence-chart:<VERSION>
+docker push registry.internal.company.com/simba/simba-intelligence:<SI_VERSION>
 
 # Repeat for all images
 ```
@@ -205,6 +227,18 @@ following it shipped without the application.
 
 - `insightsoftware/zoomdata-web` does not exist. Docker Hub returns "object not found". The
   real repository is `insightsoftware/zoomdata`.
+Re-verified 2026-08-28. `docker manifest inspect
+insightsoftware/simba-intelligence-chart:26.2.1` reports config mediaType
+`application/vnd.cncf.helm.config.v1+json` with a single
+`application/vnd.cncf.helm.chart.content.v1.tar+gzip` layer of 505,703 bytes,
+the chart tarball. The application image
+`insightsoftware/simba-intelligence:26.2.1` reports
+`application/vnd.oci.image.index.v1+json`, a real multi-arch image index.
+`curl -s -o /dev/null -w '%{http_code}' https://hub.docker.com/v2/repositories/insightsoftware/zoomdata-web/tags`
+returns **404**; the same call for `insightsoftware/zoomdata` returns **200**.
+The step-by-step body above was corrected to match on 2026-08-28; before that
+it still told the reader to pull, save, tag and push the chart as an image.
+
 - `insightsoftware/simba-intelligence-chart` is a **Helm OCI artefact**
   (`application/vnd.cncf.helm.config.v1+json`), not a runnable container image. `docker pull`
   of it produces something that cannot be run. Pull it with `helm pull oci://...` and treat

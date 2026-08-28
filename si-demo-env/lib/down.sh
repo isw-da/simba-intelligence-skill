@@ -7,8 +7,7 @@ load_config
 phase "teardown ${DEMO_NAME} (namespace ${NAMESPACE})"
 # stop local access first
 docker rm -f si-demo-caddy >/dev/null 2>&1 || true
-pkill -f "port-forward.*${CHART_SVC}" 2>/dev/null || true
-pkill -f "port-forward.*${DISCO_SVC}" 2>/dev/null || true
+stop_own_forwards
 ok "stopped Caddy + port-forwards"
 
 if [ "${1:-}" = "--keep-namespace" ]; then

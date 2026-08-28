@@ -81,7 +81,7 @@ First install takes 5-10 minutes (image pull). Expected pods when healthy:
 |---|---|---|
 | `si-simba-intelligence-chart-*` | Deployment | 1/1 Running |
 | `si-simba-intelligence-chart-worker-*` | Deployment | 1/1 Running |
-| `si-simba-intelligence-chart-mcp-*` | Deployment | 2/2 Running |
+| `si-simba-intelligence-chart-mcp-*` | Deployment | 1/1 Running |
 | `si-simba-intelligence-chart-celery-beat-0` | StatefulSet | 1/1 Running |
 | `si-discovery-web-0` | StatefulSet | 1/1 Running |
 | `si-discovery-query-engine-0` | StatefulSet | 1/1 Running |
@@ -90,8 +90,27 @@ First install takes 5-10 minutes (image pull). Expected pods when healthy:
 | `si-simba-intelligence-chart-redis-0` | StatefulSet | 1/1 Running |
 | `si-consul-server-0` | StatefulSet | 1/1 Running |
 | `si-reloader-*` | Deployment | 1/1 Running |
-| `si-simba-intelligence-chart-db-migrate-*` | Job | 0/1 Completed |
-| `si-simba-intelligence-chart-initjob-*` | Job | 0/1 Completed |
+| `si-simba-intelligence-chart-dbm-<nnnn>-<nnn>-*` | Job | 0/1 Completed |
+| `si-simba-intelligence-chart-init-<nnnn>-<nnn>-*` | Job | 0/1 Completed |
+
+Corrected 2026-08-28 against the running 26.2.1 lab. Three rows in the table
+above were wrong:
+
+- The MCP pod is **1/1**, not 2/2. The nginx sidecar was removed in 26.2, so
+  the deployment has one container. Proof:
+  `kubectl -n simba-intel get pod -o jsonpath='{.status.containerStatuses[*].name}'`
+  on the MCP pod returns the single name `simba-intelligence-chart-mcp`.
+- The two Jobs are no longer named `db-migrate` and `initjob`. On this chart
+  they render as `si-simba-intelligence-chart-dbm-2608-001` and
+  `si-simba-intelligence-chart-init-2608-001`. The suffix is generated per
+  chart build, so match on the `dbm-` and `init-` stems, never on the old
+  names. Proof: `helm -n simba-intel get manifest si | grep -A2 '^kind: Job'`.
+- **The Jobs disappear.** They set `ttlSecondsAfterFinished: 86400` (dbm) and
+  `3600` (init), so Kubernetes garbage-collects them one day and one hour
+  after they succeed. `kubectl -n simba-intel get jobs` on a healthy install
+  older than a day returns `No resources found`. That is success, not
+  failure. Do not wait for a Job that has already been collected. Proof:
+  `helm -n simba-intel get manifest si | grep ttlSecondsAfterFinished`.
 
 ### Step 4: Verify services
 

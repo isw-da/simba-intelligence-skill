@@ -12,6 +12,12 @@ kubectl -n simba-intel get svc
 kubectl -n simba-intel get events --sort-by=.lastTimestamp | tail -40
 ```
 
+Note: Kubernetes expires events after about an hour by default. On a cluster
+that has been up for a day this returns `No resources found`, which means
+"nothing has happened recently", not "nothing is wrong". Confirmed on the
+25-hour-old 26.2.1 lab on 2026-08-28. For a problem that started before that
+window, go to pod logs rather than events.
+
 ---
 
 ## Pod reference
@@ -19,7 +25,7 @@ kubectl -n simba-intel get events --sort-by=.lastTimestamp | tail -40
 ### Deployments (restart with `kubectl rollout restart deploy/<name>`):
 - `si-simba-intelligence-chart` — main web application
 - `si-simba-intelligence-chart-worker` — Celery task worker
-- `si-simba-intelligence-chart-mcp` — MCP server (2 containers)
+- `si-simba-intelligence-chart-mcp` — MCP server (1 container on 26.2+; the nginx sidecar was removed, so `--all-containers` is harmless but redundant)
 - `si-reloader` — configuration reloader
 
 ### StatefulSets (restart by deleting the pod — it recreates):
@@ -31,9 +37,21 @@ kubectl -n simba-intel get events --sort-by=.lastTimestamp | tail -40
 - `si-consul-server-0` — service discovery
 - `si-simba-intelligence-chart-celery-beat-0` — task scheduler
 
-### Jobs (one-off, should show Completed):
-- `si-simba-intelligence-chart-db-migrate-*` — database migration
-- `si-simba-intelligence-chart-initjob-*` — initialisation
+### Jobs (one-off, should show Completed, then vanish):
+- `si-simba-intelligence-chart-dbm-<nnnn>-<nnn>-*` — database migration
+- `si-simba-intelligence-chart-init-<nnnn>-<nnn>-*` — initialisation
+
+Corrected 2026-08-28 against the running 26.2.1 lab. These were previously
+listed as `db-migrate` and `initjob`; those names no longer render. On this
+chart they are `si-simba-intelligence-chart-dbm-2608-001` and
+`si-simba-intelligence-chart-init-2608-001`, and the numeric suffix is
+generated per chart build. Match on the `dbm-` / `init-` stem.
+
+They also self-delete: `ttlSecondsAfterFinished` is 86400 for dbm and 3600
+for init. An install older than a day reports `No resources found` for
+`kubectl -n simba-intel get jobs`, and that is the healthy state. Verify with
+`helm -n simba-intel get manifest si | grep -E 'kind: Job|ttlSecondsAfterFinished'`,
+which works after the Jobs themselves are gone.
 
 ---
 
@@ -261,7 +279,36 @@ Discovery version does not support.
 kubectl -n simba-intel get pods -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' | sort -u | grep -E "simba-intelligence|zoomdata:"
 ```
 
-If SI shows `26.1.1` but Discovery shows `25.4`, versions are mismatched.
+**Do not read "the two numbers differ" as "mismatched".** The chart ships a
+deliberate skew: SI and Discovery carry different tags on purpose, set by
+`global.image.tag`. On a healthy, correct 26.2.1 install from the published
+chart, that same command prints:
+
+```
+docker.io/insightsoftware/simba-intelligence:26.2.1
+docker.io/insightsoftware/zoomdata:26.2.0
+```
+
+Verified live 2026-08-28 on `kind-simba-intel-lab`, Helm release `si`,
+chart `simba-intelligence-chart-26.2.1`, all 11 pods `1/1 Running`. Treating
+a difference as the fault condition marks a working system broken, which is
+the expensive way to be wrong on a customer call.
+
+What actually indicates a mismatch is a **minor-version** gap, the signature
+of overriding `image.tag` on an older chart:
+
+- SI `26.1.1` with Discovery `25.4.x` — mismatched, this is the real failure.
+- SI `26.2.1` with Discovery `26.2.0` — **correct**, this is what 26.2.1 ships.
+
+The reliable check is not comparing the two tags to each other but confirming
+the chart is a published one and was never `--set image.tag`ed:
+
+```bash
+helm -n simba-intel get metadata si          # CHART / VERSION should be a published release
+helm -n simba-intel get values si            # must NOT contain an image.tag override
+```
+
+On the verified-good lab, `get values` returns only `ingress: enabled: false`.
 
 ### Fix:
 **Always use the official published Helm chart** — never just override image
@@ -397,6 +444,44 @@ kubectl -n simba-intel port-forward svc/si-simba-intelligence-chart 8082:5050
 |---|---|---|---|
 | `GET /api/v1/healthz` | 5050 (local: 8082) | 200 JSON | Main app healthy |
 | `GET /discovery/api/user` | 9050 (local: 8081) | 401 JSON | Discovery reachable |
+
+---
+
+## Which entries in this file have been run against a live instance
+
+Added 2026-08-28. Everything below was exercised against Helm release `si`,
+chart `simba-intelligence-chart-26.2.1`, on `kind-simba-intel-lab`, 25 hours
+after install, all 11 pods `1/1 Running` with **0 restarts**. An entry not
+listed here is an untested claim, however plausible it reads.
+
+### Verified working
+
+| Entry | Evidence |
+|---|---|
+| `GET /api/v1/healthz` returns 200 JSON | returned `{"status":"OK"}` |
+| `GET /discovery/api/user` returns 401 JSON | returned 401, `content-type: application/json` |
+| Caddy 502 means the port-forward behind it is dead | reproduced unplanned: the live Caddy 502'd on `/`, `/discovery/*` and `/mcp/*`; the guide's own diagnostic then showed nothing listening on 8081 or 8082. Cause as documented. |
+| Wrong port-forward syntax error | `port-forward svc/... 19999` returned exactly `error: Service si-simba-intelligence-chart does not have a service port 19999` |
+| Version-mismatch diagnostic command | runs and prints both images correctly; its **interpretation rule was wrong** and is corrected above |
+| `logs sts/<name>` and `--all-containers` | both exit 0 |
+| Basic auth against the bundled Composer | 200 with `admin` + the secret, 401 without. Re-confirms INSTALL-LOG finding 5 on a second day. |
+| The SI app is an SPA that 200s on any unmatched non-API path | `/`, `/total/nonsense`, `/this/is/not/real` all returned 200 `text/html`; `/api/v1/<nonsense>` correctly returned 404. This is why a health check must read the body, not the status code. |
+
+### Not verified, and why
+
+| Entry | Why not |
+|---|---|
+| ImagePullBackOff, including the OKE fully-qualified-path issue | needs an OKE cluster or a deliberately broken image; not reproducible read-only |
+| CrashLoopBackOff | would require breaking a running pod on a shared cluster |
+| db-migrate "fakeurl" failure | both Jobs were already TTL-collected; reproducing needs a reinstall |
+| start-vis 400 / suggestions fail | needs an LLM configured plus a deliberately version-skewed install |
+| All four Playground symptoms (raw JSON, "taking longer", "Technical Error", model choice) | no LLM provider is configured on this instance, so the Playground path cannot be driven at all |
+| Login loop under production ingress | this lab runs `ingress.enabled: false` |
+| Docker daemon down, kubectl connection refused | would require stopping Docker on a shared machine |
+
+The honest summary: the infrastructure and routing entries are now tested. The
+LLM and Playground entries, which are the ones most likely to be needed live
+in front of a customer, are still untested claims.
 
 ---
 

@@ -67,11 +67,31 @@ for PORT in 8080 8081 8082; do
 done
 if [ "$BLOCKED" = true ]; then
   echo ""
-  echo "Some ports are occupied. Attempting to free them..."
-  docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop 2>/dev/null || true
-  pkill -f "port-forward.*8082:5050" 2>/dev/null || true
-  pkill -f "port-forward.*8081:9050" 2>/dev/null || true
+  echo "Some ports are occupied."
+  # Only ever stop what a previous run of THIS script started. The old code
+  # ran `docker ps --filter ancestor=caddy:2 | xargs docker stop` and
+  # `pkill -f port-forward...`, which stop any caddy:2 container and any
+  # process merely mentioning the string on the whole machine.
+  if [ -f /tmp/simba-si-caddy.cid ]; then
+    docker stop "$(cat /tmp/simba-si-caddy.cid)" &>/dev/null || true
+    rm -f /tmp/simba-si-caddy.cid
+  fi
+  if [ -f /tmp/simba-si-portforward.pids ]; then
+    while read -r P; do
+      [ -n "$P" ] && ps -p "$P" -o command= 2>/dev/null | grep -q port-forward && kill "$P" 2>/dev/null || true
+    done < /tmp/simba-si-portforward.pids
+    rm -f /tmp/simba-si-portforward.pids
+  fi
   sleep 2
+  STILL=""
+  for PORT in 8080 8081 8082; do
+    lsof -nP -iTCP:$PORT -sTCP:LISTEN &>/dev/null && STILL="$STILL $PORT"
+  done
+  if [ -n "$STILL" ]; then
+    warn "Ports still in use:$STILL"
+    warn "Something else on this machine is holding them. Stop it, then run this again."
+    echo "Press Enter to close."; read; exit 1
+  fi
 fi
 info "Ports ready"
 
@@ -136,15 +156,17 @@ cat > /tmp/Caddyfile << 'EOF'
 }
 EOF
 
-pkill -f "port-forward.*8082:5050" 2>/dev/null || true
-pkill -f "port-forward.*8081:9050" 2>/dev/null || true
-docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop 2>/dev/null || true
 sleep 1
 
 kubectl -n simba-intel port-forward svc/si-simba-intelligence-chart 8082:5050 &>/dev/null &
+PF1=$!
 kubectl -n simba-intel port-forward svc/si-discovery-web 8081:9050 &>/dev/null &
+PF2=$!
+printf '%s\n%s\n' "$PF1" "$PF2" > /tmp/simba-si-portforward.pids
 sleep 2
-docker run --rm -d -p 8080:8080 -v /tmp/Caddyfile:/etc/caddy/Caddyfile caddy:2 &>/dev/null
+# Keep the id docker gives us rather than re-querying by image.
+CADDY_CID=$(docker run --rm -d -p 8080:8080 -v /tmp/Caddyfile:/etc/caddy/Caddyfile caddy:2 2>/dev/null)
+echo "$CADDY_CID" > /tmp/simba-si-caddy.cid
 sleep 3
 
 # --- Done ---
@@ -155,7 +177,13 @@ echo "============================================="
 echo ""
 echo "  Opening http://localhost:8080 ..."
 echo ""
-echo "  Default login: admin / SimbaIntelligence123456!"
+echo "  Username: admin"
+echo "  Password: read it from the cluster, it is generated per install:"
+echo "    kubectl -n simba-intel get secret si-discovery-web \\"
+echo "      -o jsonpath='{.data.admin\\.password}' | base64 -d"
+echo ""
+echo "  (This used to print a hardcoded default here. The password is a"
+echo "   per-install secret, so read it rather than assume it.)"
 echo ""
 echo "  Next: Configure your LLM at /llm-configuration"
 echo ""
@@ -167,6 +195,9 @@ open "http://localhost:8080"
 
 echo "Press Enter to stop SI and close."
 read
-pkill -f "port-forward.*simba-intel" 2>/dev/null || true
-docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop 2>/dev/null || true
+# Stop only this run's processes. `pkill -f "port-forward.*simba-intel"`
+# matched any command line containing that text anywhere on the machine.
+kill "$PF1" "$PF2" 2>/dev/null || true
+[ -n "$CADDY_CID" ] && docker stop "$CADDY_CID" &>/dev/null || true
+rm -f /tmp/simba-si-portforward.pids /tmp/simba-si-caddy.cid
 echo "Stopped."

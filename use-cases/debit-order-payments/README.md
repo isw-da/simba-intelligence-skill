@@ -1,5 +1,37 @@
 # Debit-order payments processor
 
+> **Not runnable, and not yet demo-safe. Read this before showing anything.**
+>
+> Assessed 2026-08-28. Two things to know before this folder goes near a
+> customer.
+>
+> 1. **It ships no data.** There is no CSV, no SQL seed, no fixture and no
+>    generator anywhere in this repository. `sql-templates.py` and
+>    `apply-rules.py` are API clients: they post source and rule definitions
+>    to an SI tenant that must already contain tables named `branch`,
+>    `branch_legal_entity`, `idm_branch_perf_v1`, `idm_monthly_due_v2` and
+>    `idm_fee_stats_v3`. Without the original extract, `python3
+>    sql-templates.py build` has nothing to build against. Everything here is
+>    a description of a demo, not the demo. Building the synthetic equivalent
+>    from `data-shape.md` is the missing piece.
+> 2. **A real financial institution is named in the expected answers.**
+>    `CAPITEC_SO` and `CAPITEC_TPPP` appear in `demo-flow.md`,
+>    `two-sources-walkthrough.md`, `field-dictionary.md` and
+>    `sql-templates.py`, and `demo-flow.md` closes on "83% of your forward
+>    exposure sits with one funder". Capitec is a live South African bank.
+>    Do not put that slide in front of anyone until those values are
+>    replaced.
+>
+> The anonymisation pass was also a blind string substitution and left broken
+> output: `starter-guide.md` contains `FROM the customer.branch b`, which will
+> not parse, and three rules in `rules.md` end "a different the customer
+> source" and would be sent to an LLM verbatim.
+>
+> What this folder IS good for: discovery, modelling reference, and the
+> "what to avoid on the demo" section of `demo-flow.md`, which is the most
+> reusable page here and applies to any SI demo.
+
+
 Use case for a company that processes debit-order collections on
 behalf of lenders or merchants. The company runs collection attempts
 against the customer's bank account on a schedule, charges fees on

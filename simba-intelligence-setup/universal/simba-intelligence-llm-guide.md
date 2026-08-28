@@ -191,7 +191,7 @@ kubectl -n simba-intel get pods -w
 Expected pods when healthy:
 - `si-simba-intelligence-chart-*` — 1/1 Running
 - `si-simba-intelligence-chart-worker-*` — 1/1 Running
-- `si-simba-intelligence-chart-mcp-*` — 2/2 Running
+- `si-simba-intelligence-chart-mcp-*` — 1/1 Running (the nginx sidecar was removed in 26.2)
 - `si-simba-intelligence-chart-celery-beat-0` — 1/1 Running
 - `si-discovery-web-0` — 1/1 Running
 - `si-discovery-query-engine-0` — 1/1 Running
@@ -200,8 +200,13 @@ Expected pods when healthy:
 - `si-simba-intelligence-chart-redis-0` — 1/1 Running
 - `si-consul-server-0` — 1/1 Running
 - `si-reloader-*` — 1/1 Running
-- `*-db-migrate-*` — 0/1 Completed
-- `*-initjob-*` — 0/1 Completed
+- `*-dbm-<nnnn>-<nnn>-*` — 0/1 Completed (was `db-migrate`; renamed in 26.2)
+- `*-init-<nnnn>-<nnn>-*` — 0/1 Completed (was `initjob`; renamed in 26.2)
+
+Both Jobs delete themselves via `ttlSecondsAfterFinished` (86400 for dbm,
+3600 for init), so on an install older than a day `kubectl get jobs` returns
+nothing and that is the healthy state. Verified on a live 26.2.1 install,
+2026-08-28.
 
 ---
 

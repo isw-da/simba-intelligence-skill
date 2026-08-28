@@ -223,9 +223,22 @@ cat > "$CADDYFILE" << 'EOF'
 }
 EOF
 
-pkill -f "port-forward.*simba-intelligence-chart.*8082:5050" 2>/dev/null || true
-pkill -f "port-forward.*discovery-web.*8081:9050" 2>/dev/null || true
-docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop 2>/dev/null || true
+# Stop only what a previous run of this script started. `pkill -f` matches
+# any command line containing the pattern, and the ancestor filter stops every
+# caddy:2 container on the host, including unrelated ones.
+PIDFILE="/tmp/simba-si-aks-portforward.pids"
+CIDFILE="/tmp/simba-si-aks-caddy.cid"
+if [ -f "$PIDFILE" ]; then
+  while read -r OLDPID; do
+    [ -n "$OLDPID" ] && ps -p "$OLDPID" -o command= 2>/dev/null | grep -q port-forward \
+      && kill "$OLDPID" 2>/dev/null || true
+  done < "$PIDFILE"
+  rm -f "$PIDFILE"
+fi
+if [ -f "$CIDFILE" ]; then
+  docker stop "$(cat "$CIDFILE")" &>/dev/null || true
+  rm -f "$CIDFILE"
+fi
 sleep 2
 
 kubectl -n "$NAMESPACE" port-forward "svc/${RELEASE_NAME}-simba-intelligence-chart" 8082:5050 &>/dev/null &
@@ -236,7 +249,9 @@ kubectl -n "$NAMESPACE" port-forward "svc/${RELEASE_NAME}-discovery-web" 8081:90
 PF2_PID=$!
 sleep 1
 
-docker run --rm -d -p 8080:8080 -v "$CADDYFILE":/etc/caddy/Caddyfile caddy:2 &>/dev/null
+printf '%s\n%s\n' "$PF1_PID" "$PF2_PID" > "$PIDFILE"
+CADDY_CID=$(docker run --rm -d -p 8080:8080 -v "$CADDYFILE":/etc/caddy/Caddyfile caddy:2 2>/dev/null)
+echo "$CADDY_CID" > "$CIDFILE"
 sleep 3
 
 # --- Done ---
@@ -262,7 +277,7 @@ echo "    kubectl config use-context docker-desktop"
 echo ""
 echo "  To stop port-forwards:"
 echo "    kill $PF1_PID $PF2_PID"
-echo "    docker stop \$(docker ps -q --filter ancestor=caddy:2)"
+echo "    docker stop \$(cat $CIDFILE)   # only this script's Caddy"
 echo ""
 
 if command -v open &>/dev/null; then open "http://localhost:8080"; fi

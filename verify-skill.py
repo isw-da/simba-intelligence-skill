@@ -16,7 +16,7 @@ shrinking it. Never lower it to make a run green.
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-MIN_CHECKS = 6
+MIN_CHECKS = 8
 CHECK_MANIFEST = [
     "skill_frontmatter_keys",
     "skill_frontmatter_parses",
@@ -24,6 +24,8 @@ CHECK_MANIFEST = [
     "shell_scripts_parse",
     "relative_path_citations_resolve",
     "no_published_secrets",
+    "no_collateral_damage_commands",
+    "si_version_not_behind_release",
 ]
 
 results = []
@@ -245,12 +247,111 @@ def check_secrets():
                 % (scanned, len(SECRET_PATTERNS)))
 
 
+def check_collateral_damage():
+    """No shipped script may kill processes or containers it did not start.
+
+    Added 2026-08-28. Two patterns caused this: `pkill -f "port-forward..."`
+    matches any process whose command line merely contains the string, and
+    `docker ps --filter ancestor=caddy:2 | xargs docker stop` stops every
+    caddy:2 container on the host. Verified on the machine this was written
+    on: an unrelated demo container named si-caddy runs caddy:2 on port 8090
+    and the second pattern would have stopped it. Record the PID or container
+    id you created and act only on that.
+    """
+    scripts = tracked("*.sh") + tracked("*.command") + tracked("*.ps1")
+    if not scripts:
+        record("no_collateral_damage_commands", None, "no shell scripts tracked")
+        return
+    patterns = {
+        "pkill by pattern": r"pkill\s+-f",
+        "docker stop by image": r"--filter\s+ancestor=",
+        "killall": r"\bkillall\b",
+    }
+    hits = []
+    for f in scripts:
+        try:
+            body = open(os.path.join(ROOT, f), encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for i, line in enumerate(body.split("\n"), 1):
+            # A comment explaining why the pattern is banned must not trip the
+            # check, or the only way to document the hazard is to stay silent
+            # about it.
+            if line.lstrip().startswith("#"):
+                continue
+            for label, pat in patterns.items():
+                if re.search(pat, line):
+                    hits.append("%s:%d %s" % (f, i, label))
+    record("no_collateral_damage_commands", not hits,
+           "%d hit(s): %s" % (len(hits), hits[:3]) if hits
+           else "%d scripts scanned, %d patterns, none present"
+                % (len(scripts), len(patterns)))
+
+
+def check_version_currency():
+    """No install script may pin an SI chart older than the newest SI release.
+
+    Added 2026-08-28. Compares against the `simba-intelligence` image tags,
+    NOT `zoomdata`. Those are two different products on two different version
+    lines: chart 26.2.1 ships Composer 26.2.0 on purpose, and Composer 26.2.2
+    exists while SI's newest release is still 26.2.1. Comparing an SI pin
+    against a Composer tag marks a correct pin stale.
+
+    Snapshot tags are ignored: a 26.3.0-SNAPSHOT is not a release.
+
+    Needs network. Reports NOT APPLICABLE, named and counted, when offline.
+    """
+    import json, urllib.request
+    scripts = (tracked("*.sh") + tracked("*.command")
+               + tracked("*.ps1") + tracked("*.bat"))
+    pins = []
+    for f in scripts:
+        try:
+            body = open(os.path.join(ROOT, f), encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        # Covers both a hardcoded default and the "(e.g. 26.2.1)" example the
+        # interactive scripts prompt with. The example is the number a user
+        # actually types, so a stale example is a stale pin.
+        for m in re.finditer(r"(?:CHART_VERSION|ChartVersion|chart version)"
+                             r"[^\n]{0,80}?(\d+\.\d+\.\d+)", body, re.I):
+            pins.append((f, m.group(1)))
+    if not pins:
+        record("si_version_not_behind_release", None,
+               "no script pins a CHART_VERSION default")
+        return
+    try:
+        u = ("https://hub.docker.com/v2/repositories/insightsoftware/"
+             "simba-intelligence/tags?page_size=100&ordering=last_updated")
+        data = json.load(urllib.request.urlopen(u, timeout=20))
+        rel = [t["name"] for t in data.get("results", [])
+               if re.fullmatch(r"\d+\.\d+\.\d+", t["name"])]
+    except Exception as e:
+        record("si_version_not_behind_release", None,
+               "Docker Hub unreachable (%s); %d pin(s) unchecked"
+               % (type(e).__name__, len(pins)))
+        return
+    if not rel:
+        record("si_version_not_behind_release", None,
+               "no release tags returned by Docker Hub")
+        return
+    newest = max(rel, key=lambda v: tuple(map(int, v.split("."))))
+    nt = tuple(map(int, newest.split(".")))
+    behind = ["%s pins %s, newest SI release is %s" % (f, v, newest)
+              for f, v in pins if tuple(map(int, v.split("."))) < nt]
+    record("si_version_not_behind_release", not behind,
+           "; ".join(behind[:3]) if behind
+           else "%d pin(s) at or above newest SI release %s" % (len(pins), newest))
+
+
 print("SIMBA INTELLIGENCE SKILL GATE")
 check_frontmatter()   # two checks
 check_python()
 check_shell()
 check_links()
 check_secrets()
+check_collateral_damage()
+check_version_currency()
 
 ran = {n for n, _, _ in results}
 missing = [n for n in CHECK_MANIFEST if n not in ran]

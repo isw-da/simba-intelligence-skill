@@ -96,7 +96,17 @@ for PORT in 8080 8081 8082; do
 done
 if [ "$PORTS_BLOCKED" = true ]; then
   echo ""
-  read -rp "Ports are in use. Stop the processes above and press Enter to continue, or Ctrl+C to abort: "
+  read -rp "Ports are in use. Stop the processes above and press Enter to re-check, or Ctrl+C to abort: "
+  # Re-check rather than assume the user actually freed them. The previous
+  # version printed "ports are available" unconditionally, so a genuinely
+  # blocked install reported success here and failed later at Caddy.
+  STILL=""
+  for PORT in 8080 8081 8082; do
+    if lsof -nP -iTCP:$PORT -sTCP:LISTEN &>/dev/null; then STILL="$STILL $PORT"; fi
+  done
+  if [ -n "$STILL" ]; then
+    error "Ports still in use:$STILL. Free them and re-run, or set SI_PORT_BASE to use different ports."
+  fi
 fi
 info "Ports 8080, 8081, 8082 are available"
 
@@ -110,10 +120,16 @@ EOF
 info "Values file written to $VALUES_FILE"
 
 # --- Step 5: Create Caddyfile ---
+# SKILL.md's routing rule requires all three paths. This file previously
+# routed only / and /discovery/*, so the MCP server was unreachable through
+# the documented local access path on any port.
 cat > "$CADDYFILE" << 'EOF'
 :8080 {
   @discovery path /discovery/*
   reverse_proxy @discovery host.docker.internal:8081
+
+  @mcp path /mcp/*
+  reverse_proxy @mcp host.docker.internal:8083
 
   reverse_proxy host.docker.internal:8082
 }
@@ -160,9 +176,13 @@ echo ""
 TIMEOUT=600
 ELAPSED=0
 while [ $ELAPSED -lt $TIMEOUT ]; do
-  NOT_READY=$(kubectl -n "$NAMESPACE" get pods --no-headers 2>/dev/null | grep -v "Completed" | grep -v "Running" | grep -v "Terminating" | wc -l | tr -d ' ')
-  RUNNING=$(kubectl -n "$NAMESPACE" get pods --no-headers 2>/dev/null | grep "Running" | wc -l | tr -d ' ')
-  TOTAL=$(kubectl -n "$NAMESPACE" get pods --no-headers 2>/dev/null | grep -v "Completed" | wc -l | tr -d ' ')
+  # Read the READY column, not the STATUS column. `grep Running` also matches
+  # a pod sitting at `0/1 Running` because its readiness probe is failing, so
+  # the old version declared "all pods are running" on a broken install.
+  PODS=$(kubectl -n "$NAMESPACE" get pods --no-headers 2>/dev/null | grep -v "Completed")
+  TOTAL=$(echo "$PODS" | grep -c . | tr -d ' ')
+  RUNNING=$(echo "$PODS" | awk '$3=="Running" && split($2,a,"/") && a[1]==a[2]' | grep -c . | tr -d ' ')
+  NOT_READY=$((TOTAL - RUNNING))
 
   echo -ne "\r  Pods: $RUNNING/$TOTAL running, $NOT_READY pending/initializing... (${ELAPSED}s elapsed)  "
 
@@ -197,10 +217,34 @@ fi
 echo ""
 echo "Starting port-forwards and reverse proxy..."
 
-# Kill any existing port-forwards
-pkill -f "port-forward.*simba-intelligence-chart.*8082:5050" 2>/dev/null || true
-pkill -f "port-forward.*discovery-web.*8081:9050" 2>/dev/null || true
-docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop 2>/dev/null || true
+# Stop only the port-forwards and the Caddy container THIS script started.
+#
+# The previous version used `pkill -f "port-forward..."` and
+# `docker ps -q --filter ancestor=caddy:2 | xargs -r docker stop`. Both are
+# collateral-damage machines. `pkill -f` matches any process whose command
+# line merely contains the string, including an editor or agent that has it
+# in an argument. The ancestor filter stops EVERY caddy:2 container on the
+# host: verified on this machine on 2026-08-28, an unrelated demo container
+# named si-caddy runs caddy:2 on port 8090 and would have been stopped.
+PIDFILE="/tmp/simba-si-portforward.pids"
+CIDFILE="/tmp/simba-si-caddy.cid"
+
+if [ -f "$PIDFILE" ]; then
+  while read -r OLDPID; do
+    [ -n "$OLDPID" ] || continue
+    # Only kill it if it is still one of our port-forwards.
+    if ps -p "$OLDPID" -o command= 2>/dev/null | grep -q "port-forward"; then
+      kill "$OLDPID" 2>/dev/null || true
+    fi
+  done < "$PIDFILE"
+  rm -f "$PIDFILE"
+fi
+
+if [ -f "$CIDFILE" ]; then
+  OLDCID=$(cat "$CIDFILE")
+  [ -n "$OLDCID" ] && docker stop "$OLDCID" &>/dev/null || true
+  rm -f "$CIDFILE"
+fi
 
 sleep 2
 
@@ -213,9 +257,17 @@ kubectl -n "$NAMESPACE" port-forward "svc/${RELEASE_NAME}-discovery-web" 8081:90
 PF2_PID=$!
 sleep 1
 
-# Start Caddy in background
-docker run --rm -d -p 8080:8080 -v "$CADDYFILE":/etc/caddy/Caddyfile caddy:2 &>/dev/null
-CADDY_CID=$(docker ps -q --filter ancestor=caddy:2 | head -1)
+kubectl -n "$NAMESPACE" port-forward "svc/${RELEASE_NAME}-simba-intelligence-chart-mcp" 8083:8001 &>/dev/null &
+PF3_PID=$!
+sleep 1
+
+printf '%s\n%s\n%s\n' "$PF1_PID" "$PF2_PID" "$PF3_PID" > "$PIDFILE"
+
+# Start Caddy in background. Take the id `docker run -d` prints; do NOT
+# re-query by ancestor, which picks an arbitrary caddy:2 container that may
+# belong to something else entirely.
+CADDY_CID=$(docker run --rm -d -p 8080:8080 -v "$CADDYFILE":/etc/caddy/Caddyfile caddy:2 2>/dev/null)
+echo "$CADDY_CID" > "$CIDFILE"
 
 sleep 3
 
@@ -241,10 +293,21 @@ verify_composer() {
   # An unauthenticated Composer API call must return 401, not 200+HTML. A 200
   # here means the SPA swallowed the path and Composer is NOT being reached:
   # that is the mechanism behind the documented "login loop" symptom.
-  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+  local ct
+  code=$(curl -s -o /tmp/si-verify-composer.out -w "%{http_code}" --max-time 10 \
     -H "Accept: application/vnd.composer.v3+json" \
     http://localhost:8080/discovery/api/sources 2>/dev/null)
-  [ "$code" = "401" ] || [ "$code" = "200" ]
+  # 401 is the healthy unauthenticated answer and proves Composer was reached.
+  [ "$code" = "401" ] && return 0
+  # A 200 is only acceptable if it is JSON. The comment above says a 200 means
+  # the SPA swallowed the path, but the old code accepted any 200, so this
+  # check could not fail in exactly the case it was written to catch.
+  if [ "$code" = "200" ]; then
+    ct=$(head -c 1 /tmp/si-verify-composer.out 2>/dev/null)
+    [ "$ct" = "{" ] || [ "$ct" = "[" ]
+    return $?
+  fi
+  return 1
 }
 
 if verify_si; then
@@ -277,7 +340,7 @@ echo "    4. Create a data source with the Data Source Agent"
 echo "    5. Query your data in the Playground"
 echo ""
 echo "  To stop:"
-echo "    kill $PF1_PID $PF2_PID        # stop port-forwards"
+echo "    kill $PF1_PID $PF2_PID $PF3_PID   # stop port-forwards (also listed in $PIDFILE)"
 echo "    docker stop $CADDY_CID    # stop Caddy"
 echo ""
 echo "  To uninstall:"
