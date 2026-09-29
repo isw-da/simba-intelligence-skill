@@ -1,5 +1,23 @@
 # Deploying Simba Intelligence — Local Development
 
+> **26.3 (unreleased): the chart this guide installs is deprecated.**
+> Both `helm install` commands below, PowerShell and bash, name
+> `oci://docker.io/insightsoftware/simba-intelligence-chart`. That is the 26.2
+> path and it still works for 26.2.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 For local POC and development using Docker Desktop Kubernetes or kind.
 
 ---

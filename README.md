@@ -6,6 +6,16 @@ ChatGPT, Gemini or any other client through `simba-intelligence-setup/universal/
 
 Repo: https://github.com/isw-da/simba-intelligence-skill
 
+> **26.3 (unreleased at the time of writing): read this before installing.**
+> Everything in this repo describes 26.2 and earlier and stays correct for 26.2.
+> From 26.3 the standalone SI Helm chart is deprecated (PY-701), SI ships inside
+> the Logi Composer chart (PY-693), it moves off the root path, and it signs
+> users in through Composer (PY-689). The transition guide (PY-706) is
+> unfinished and nobody here has installed 26.3, so the affected guides carry a
+> note rather than a rewrite.
+> Start at
+> [`simba-intelligence-setup/references/si-26.3-notes.md`](simba-intelligence-setup/references/si-26.3-notes.md).
+
 ## Who it is for
 
 Anyone at insightsoftware who has to stand SI up, keep it up, or show it working: solution

@@ -1,5 +1,25 @@
 # Simba Intelligence — Installation & Operations Guide
 
+> **26.3 (unreleased): the chart this guide installs is deprecated.**
+> The `helm install` in the deployment section names
+> `oci://docker.io/insightsoftware/simba-intelligence-chart`. That is the 26.2
+> path and it still works for 26.2. This file is the copy handed to clients other
+> than Claude Code, so it is the one most likely to be read without the rest of
+> the skill around it.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `../references/si-26.3-notes.md`.
+
 <!--
 ============================================================================
 HOW TO DEPLOY THIS GUIDE

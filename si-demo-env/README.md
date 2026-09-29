@@ -1,5 +1,24 @@
 # si-demo-env — the standard for reproducible Simba Intelligence demo environments
 
+> **26.3 (unreleased): phase 2 of this scaffold assumes the SI chart shape.**
+> Phase 2 runs `helm install`/`helm upgrade` from a vendored `chart/`, implemented
+> at `lib/common.sh`. Every demo repo that has vendored a copy of `lib/` carries
+> the same assumption, so a 26.3 demo environment is not a matter of changing this
+> repo alone.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `../simba-intelligence-setup/references/si-26.3-notes.md`.
+
 The way every SI demo or PoV is packaged so it can be spun up, torn down, and
 deployed anywhere from its own git repo. The engine lives here in the skill; each
 demo repo **vendors** a copy of `lib/` so it stays self-contained.

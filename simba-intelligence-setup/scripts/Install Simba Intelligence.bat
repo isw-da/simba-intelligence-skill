@@ -5,6 +5,24 @@ REM ============================================================================
 REM Save as "Install Simba Intelligence.bat"
 REM Double-click to run.
 REM =============================================================================
+REM
+REM -----------------------------------------------------------------------------
+REM 26.3 NOTICE (unreleased at the time of writing, not verified)
+REM -----------------------------------------------------------------------------
+REM This script installs the standalone chart
+REM oci://docker.io/insightsoftware/simba-intelligence-chart. That chart is
+REM deprecated from 26.3 (PY-701). Simba Agentic Intelligence ships as a
+REM sub-component of the Logi Composer Helm chart instead (PY-693), moves off the
+REM root path to {composer-context}/intelligence, and signs users in through
+REM Composer rather than through its own login (PY-689). Confluence page
+REM 18711380170 records a separate SI chart pointing at an externally hosted
+REM Composer as no longer supported in 26.3 and later.
+REM
+REM The script is unchanged and still installs 26.2 correctly. It has not been
+REM re-tested against 26.3 and there is no 26.3 equivalent here, because the
+REM transition guide (PY-706) was unfinished when this notice was added.
+REM See ../references/si-26.3-notes.md
+REM -----------------------------------------------------------------------------
 
 title Simba Intelligence Installer
 cls

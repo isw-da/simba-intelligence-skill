@@ -1,5 +1,26 @@
 # Deploying Simba Intelligence — Cloud Kubernetes
 
+> **26.3 (unreleased): the chart this guide installs is deprecated.**
+> All three `helm install` commands below, AKS, GKE and the shared cloud
+> variant, name `oci://docker.io/insightsoftware/simba-intelligence-chart`. That
+> is the 26.2 path and it still works for 26.2. Composer's own Kubernetes support
+> is public and states that Kubernetes is supported for new installations only
+> from 26.3 and later, via Helm chart `composer/composer`:
+> <https://insightsoftware.mintlify.app/simba-embedded-analytics/docs/self-service-analytics/26.3/>
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 Covers Amazon EKS, Azure AKS, and Google GKE. The Helm chart is the same
 across all cloud providers — the differences are in cluster setup, ingress
 controller, IAM, and networking.

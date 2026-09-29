@@ -1,5 +1,26 @@
 # Deploying Simba Intelligence — AWS EKS
 
+> **26.3 (unreleased): the chart this guide installs is deprecated, and the
+> sign-in step changes.**
+> The `helm install` command in Step 5 names
+> `oci://docker.io/insightsoftware/simba-intelligence-chart`. That is the 26.2
+> path and it still works for 26.2. The Step 7 post-install instruction to log in
+> to SI with default credentials, and the `adminPassword` value it depends on,
+> describe a sign-in that 26.3 removes: users sign in through Composer instead.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 End-to-end guide for deploying SI on Amazon Elastic Kubernetes Service.
 Based on real production deployments.
 

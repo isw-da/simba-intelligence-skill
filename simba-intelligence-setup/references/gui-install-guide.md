@@ -1,5 +1,27 @@
 # GUI-Only Installation Path
 
+> **26.3 (unreleased): three steps in this guide stop being right.**
+> This guide tells a non-technical reader to read the newest
+> `simba-intelligence-chart` tag off Docker Hub, to expect SI's own UI at
+> `http://localhost:8080`, and to configure a model at `/llm-configuration`. From
+> 26.3 the chart to look for is the Composer chart, SI does not answer at the root
+> of its host, and LLM Configuration moves into Composer's Administration > Tools
+> (Confluence page 18773016632, epic SCP-314). There is no GUI path for 26.3
+> written anywhere yet, so do not adapt this one.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 This guide is for users who are not comfortable with the command line. It
 covers installing Simba Intelligence using graphical interfaces wherever
 possible. A small number of terminal commands are still required (marked

@@ -14,6 +14,24 @@
 #   $env:NAMESPACE      — override namespace (default: simba-intel)
 #   $env:RELEASE_NAME   — override Helm release name (default: si)
 # =============================================================================
+#
+# -----------------------------------------------------------------------------
+# 26.3 NOTICE (unreleased at the time of writing, not verified)
+# -----------------------------------------------------------------------------
+# This script installs the standalone chart
+# oci://docker.io/insightsoftware/simba-intelligence-chart. That chart is
+# deprecated from 26.3 (PY-701). Simba Agentic Intelligence ships as a
+# sub-component of the Logi Composer Helm chart instead (PY-693), moves off the
+# root path to {composer-context}/intelligence, and signs users in through
+# Composer rather than through its own login (PY-689). Confluence page
+# 18711380170 records a separate SI chart pointing at an externally hosted
+# Composer as no longer supported in 26.3 and later.
+#
+# The script is unchanged and still installs 26.2 correctly. It has not been
+# re-tested against 26.3 and there is no 26.3 equivalent here, because the
+# transition guide (PY-706) was unfinished when this notice was added.
+# See ../references/si-26.3-notes.md
+# -----------------------------------------------------------------------------
 
 $ErrorActionPreference = "Stop"
 

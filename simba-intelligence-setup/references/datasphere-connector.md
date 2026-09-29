@@ -1,5 +1,24 @@
 # Connecting SI to SAP Datasphere
 
+> **26.3 (unreleased): the values keys in this guide may move.**
+> The `helm upgrade` in the EDC enablement step uses the same
+> `discovery.edc.<connector>` shape as `enabling-edcs.md`, against the standalone
+> SI chart. Once SI is a sub-component of the Composer chart that values path is
+> not known. The Datasphere and HANA Cloud connection detail itself is unaffected.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 Use this when a customer asks whether SI / Composer can connect to SAP
 Datasphere. The answer is yes, via the HANA Cloud SQL endpoint that
 Datasphere exposes per space through Database Users (Open SQL Schema).

@@ -1,5 +1,26 @@
 # Deploying Simba Intelligence — Air-Gapped / Disconnected
 
+> **26.3 (unreleased): the artefact this guide tells you to mirror changes.**
+> The two `helm pull` commands, the `helm install` from the local `.tgz`, the
+> `helm upgrade` to a newer `.tgz`, and the note that 26.2.1 ships SI alongside
+> Composer in one chart all describe the 26.2 containment, where the SI chart
+> bundles Composer as the `discovery` subchart. 26.3 inverts that. The artefact to
+> mirror becomes the Composer chart, whose image list is not the SI chart's image
+> list and which nobody has enumerated for an air-gapped install.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 For environments with no outbound internet access. This covers mirroring
 container images to an internal registry and installing from a local Helm
 chart archive.

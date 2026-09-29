@@ -1,5 +1,25 @@
 # Enabling Additional EDC Connectors
 
+> **26.3 (unreleased): the values keys in this guide may move.**
+> The `helm upgrade` below sets `discovery.edc.<connector>` overrides against the
+> standalone SI chart. Once SI is a sub-component of the Composer chart the
+> values path for those keys is not known, and nothing found states what it
+> becomes. Do not assume the same key path works on 26.3; check the chart's own
+> `values.yaml` first.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 The SI Helm chart bundles 43+ External Data Connector (EDC) images from
 the legacy Zoomdata/Composer architecture. Only PostgreSQL and Python
 are enabled by default. All others are available but disabled.

@@ -1,9 +1,10 @@
 ---
 name: simba-intelligence-setup
 description: >
-  Install, configure, and troubleshoot Simba Intelligence (SI) — insightsoftware's
-  AI-powered data platform — across any Kubernetes environment. Use this skill
-  whenever the user mentions Simba Intelligence installation, SI setup, Helm chart
+  Install, configure, and troubleshoot Simba Agentic Intelligence (SI),
+  insightsoftware's AI-powered data platform, across any Kubernetes environment.
+  Use this skill whenever the user mentions Simba Intelligence installation,
+  SI setup, Helm chart
   deployment, SI port-forwarding, SI ingress, SI LLM configuration, SI data
   connections, SI data source agent, SI playground, SI troubleshooting, SI on
   Docker Desktop, kind cluster SI, SI on EKS, SI on AKS, SI on GKE, SI on-prem,
@@ -23,6 +24,17 @@ description: >
 # Simba Intelligence — Setup & Operations Skill
 
 <!-- Skill version: 2026-07-11 -->
+
+> **Version scope: this skill describes 26.2 and earlier.**
+> It stays correct for 26.2. From 26.3 the deployment shape changes in ways that
+> make some procedures here fail rather than degrade: the standalone SI Helm
+> chart is deprecated (PY-701) and SI ships inside the Logi Composer chart
+> (PY-693), SI moves off the root path to `{composer-context}/intelligence`, and
+> SI's own sign-in is removed in favour of Composer's (PY-689). The transition
+> guide (PY-706) was unfinished when this note was written, and 26.3 was not yet
+> released, so nothing here has been re-tested against it.
+> Read **`references/si-26.3-notes.md`** before installing or upgrading.
+> Affected guides carry their own note at the top.
 
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and

@@ -1,5 +1,17 @@
 # LLM Provider Configuration
 
+> **26.3 (unreleased): where you configure a model moves, and how you sign in
+> to do it moves with it.**
+> The instruction below to sign in with a supervisor or administrator account
+> and navigate to `/llm-configuration` describes Simba Agentic Intelligence's own
+> admin UI. From 26.3 that UI and its frontend APIs are removed, users sign in
+> through Logi Composer (PY-689), and LLM Configuration sits under Composer's
+> Administration > Tools alongside Agentic Rules (Confluence page 18773016632,
+> epic SCP-314). The provider detail on this page, endpoints, credentials and
+> parameter shapes, is unaffected as far as anything found says; it is the route
+> to the screen that changes. None of this has been verified on a running 26.3
+> instance. See `si-26.3-notes.md`.
+
 Simba Intelligence is BYOLLM — Bring Your Own LLM. It does not ship with an
 AI model and insightsoftware does not provide one. An external LLM provider
 must be configured before AI features (Data Source Agent, Playground natural

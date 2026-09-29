@@ -1,5 +1,25 @@
 # Troubleshooting Simba Intelligence
 
+> **26.3 (unreleased): the chart-level recovery steps here are the 26.2 path.**
+> The `helm pull` and `helm upgrade` under the version-mismatch recovery name
+> `oci://docker.io/insightsoftware/simba-intelligence-chart`. Symptom diagnosis in
+> this file is unaffected; the recovery command is what changes. The login-loop
+> entry is also worth reading against the sign-in change below, because the
+> symptom may survive while its cause moves.
+>
+> From 26.3, Simba Agentic Intelligence ships as a sub-component of the Logi
+> Composer Helm chart (PY-693) and the standalone `simba-intelligence-chart`
+> is deprecated (PY-701). A separate SI chart pointing at a Composer hosted
+> elsewhere is recorded as no longer supported in 26.3 and later (Confluence
+> page 18711380170). SI also moves off the root path to
+> `{composer-context}/intelligence`, and signs users in through Composer
+> rather than through its own login (PY-689).
+>
+> Nothing below has been re-tested against 26.3 and no 26.3 replacement is
+> written here, because the transition guide (PY-706) was unfinished when this
+> note was added. 26.3 was unreleased at that point, so treat all of it as
+> subject to change. See `si-26.3-notes.md`.
+
 ---
 
 ## Quick diagnostics

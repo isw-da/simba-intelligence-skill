@@ -101,6 +101,12 @@ EOF
     && ok "staged ojdbc11.jar for the Oracle EDC" || warn "ojdbc stage failed"
 }
 
+# 26.3 NOTICE (unreleased at the time of writing, not verified): this vendors and
+# installs the standalone SI chart .tgz. That chart is deprecated from 26.3
+# (PY-701); SI ships inside the Logi Composer chart instead (PY-693). Every demo
+# repo that vendored a copy of lib/ carries the same assumption, so a 26.3 demo
+# environment is not a matter of changing this file alone. Unchanged and still
+# correct for 26.2. See ../../simba-intelligence-setup/references/si-26.3-notes.md
 helm_up() {
   phase "helm install/upgrade (${RELEASE})"
   local chart; chart="$(ls "$ENV_DIR"/chart/*.tgz 2>/dev/null | head -1)"
