@@ -1,5 +1,10 @@
 # Deploying Simba Intelligence — Local Development
 
+> **Version scope (2 October 2026).** This guide covers the standalone
+> `simba-intelligence-chart`, whose newest GA release on Docker Hub is 26.2.1; it has no
+> 26.3 GA release. Keep using it for existing 26.2.x installs. For a new 26.3 install, SI
+> ships inside the Logi Composer chart: follow `references/si-26.3-install.md`.
+
 For local POC and development using Docker Desktop Kubernetes or kind.
 
 ---

@@ -67,6 +67,9 @@ Write-Info "Helm is installed"
 $ChartVersion = $env:CHART_VERSION
 if (-not $ChartVersion) {
     Write-Host ""
+    Write-Host "  This installs the standalone SI chart, 26.2.x and earlier. It has no 26.3 GA release."
+    Write-Host "  For 26.3, SI ships inside the Logi Composer chart (composer/composer):"
+    Write-Host "  see simba-intelligence-setup/references/si-26.3-install.md in the skill repo."
     $ChartVersion = Read-Host "Enter the chart version to install (e.g. 26.2.1)"
 }
 if (-not $ChartVersion) {

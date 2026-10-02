@@ -76,6 +76,9 @@ info "Helm is installed"
 # --- Step 2: Get chart version ---
 if [ -z "${CHART_VERSION:-}" ]; then
   echo ""
+  echo "  This installs the standalone SI chart, 26.2.x and earlier. It has no 26.3 GA release."
+  echo "  For 26.3, SI ships inside the Logi Composer chart (composer/composer):"
+  echo "  see simba-intelligence-setup/references/si-26.3-install.md in the skill repo."
   read -rp "Enter the chart version to install (e.g. 26.2.1): " CHART_VERSION
 fi
 if [ -z "$CHART_VERSION" ]; then

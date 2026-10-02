@@ -16,7 +16,7 @@ shrinking it. Never lower it to make a run green.
 import os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-MIN_CHECKS = 8
+MIN_CHECKS = 9
 CHECK_MANIFEST = [
     "skill_frontmatter_keys",
     "skill_frontmatter_parses",
@@ -26,6 +26,7 @@ CHECK_MANIFEST = [
     "no_published_secrets",
     "no_collateral_damage_commands",
     "si_version_not_behind_release",
+    "newer_si_release_signposted",
 ]
 
 results = []
@@ -288,20 +289,25 @@ def check_collateral_damage():
                 % (len(scripts), len(patterns)))
 
 
-def check_version_currency():
-    """No install script may pin an SI chart older than the newest SI release.
+def _hub_release_tags(repo):
+    """Plain X.Y.Z tags of an insightsoftware Docker Hub repository.
 
-    Added 2026-08-28. Compares against the `simba-intelligence` image tags,
-    NOT `zoomdata`. Those are two different products on two different version
-    lines: chart 26.2.1 ships Composer 26.2.0 on purpose, and Composer 26.2.2
-    exists while SI's newest release is still 26.2.1. Comparing an SI pin
-    against a Composer tag marks a correct pin stale.
-
-    Snapshot tags are ignored: a 26.3.0-SNAPSHOT is not a release.
-
-    Needs network. Reports NOT APPLICABLE, named and counted, when offline.
+    Snapshot, k3s, arch and moving tags (main, latest, 26, 26.3) are dropped:
+    none of them is a release a script can pin.
     """
     import json, urllib.request
+    u = ("https://hub.docker.com/v2/repositories/insightsoftware/%s/"
+         "tags?page_size=100&ordering=last_updated" % repo)
+    data = json.load(urllib.request.urlopen(u, timeout=20))
+    return [t["name"] for t in data.get("results", [])
+            if re.fullmatch(r"\d+\.\d+\.\d+", t["name"])]
+
+
+def _vt(v):
+    return tuple(map(int, v.split(".")))
+
+
+def _chart_pins():
     scripts = (tracked("*.sh") + tracked("*.command")
                + tracked("*.ps1") + tracked("*.bat"))
     pins = []
@@ -315,17 +321,39 @@ def check_version_currency():
         # actually types, so a stale example is a stale pin.
         for m in re.finditer(r"(?:CHART_VERSION|ChartVersion|chart version)"
                              r"[^\n]{0,80}?(\d+\.\d+\.\d+)", body, re.I):
-            pins.append((f, m.group(1)))
+            pins.append((f, m.group(1), body))
+    return pins
+
+
+def check_version_currency():
+    """No install script may pin a standalone SI chart older than its newest GA.
+
+    Added 2026-08-28; reference changed 2026-10-02. The pins are versions of
+    `insightsoftware/simba-intelligence-chart`, so they are compared against
+    that chart's own release tags. Until 26.2.1 the chart and the
+    `simba-intelligence` image moved in step, so the first version of this
+    check compared against the image. At 26.3 they split: the image went to
+    26.3 while the standalone chart stopped at 26.2.1 (only 26.3.0-SNAPSHOT
+    exists for it), because 26.3 ships SI inside the Logi Composer chart.
+    Against the image, a correct 26.2.1 chart pin read as stale and the only
+    way to go green was to pin a chart that does not exist.
+
+    The image-version signal is not dropped: newer_si_release_signposted below
+    fails whenever SI has a release no pinned chart can install, unless every
+    pinning script points at the route that can.
+
+    Never compare against `zoomdata` either: chart 26.2.1 ships Composer 26.2.0
+    on purpose. Snapshot tags are ignored: a snapshot is not a release.
+
+    Needs network. Reports NOT APPLICABLE, named and counted, when offline.
+    """
+    pins = _chart_pins()
     if not pins:
         record("si_version_not_behind_release", None,
                "no script pins a CHART_VERSION default")
         return
     try:
-        u = ("https://hub.docker.com/v2/repositories/insightsoftware/"
-             "simba-intelligence/tags?page_size=100&ordering=last_updated")
-        data = json.load(urllib.request.urlopen(u, timeout=20))
-        rel = [t["name"] for t in data.get("results", [])
-               if re.fullmatch(r"\d+\.\d+\.\d+", t["name"])]
+        rel = _hub_release_tags("simba-intelligence-chart")
     except Exception as e:
         record("si_version_not_behind_release", None,
                "Docker Hub unreachable (%s); %d pin(s) unchecked"
@@ -335,13 +363,53 @@ def check_version_currency():
         record("si_version_not_behind_release", None,
                "no release tags returned by Docker Hub")
         return
-    newest = max(rel, key=lambda v: tuple(map(int, v.split("."))))
-    nt = tuple(map(int, newest.split(".")))
-    behind = ["%s pins %s, newest SI release is %s" % (f, v, newest)
-              for f, v in pins if tuple(map(int, v.split("."))) < nt]
+    newest = max(rel, key=_vt)
+    behind = ["%s pins %s, newest standalone chart release is %s" % (f, v, newest)
+              for f, v, _ in pins if _vt(v) < _vt(newest)]
     record("si_version_not_behind_release", not behind,
            "; ".join(behind[:3]) if behind
-           else "%d pin(s) at or above newest SI release %s" % (len(pins), newest))
+           else "%d pin(s) at or above newest standalone chart release %s"
+                % (len(pins), newest))
+
+
+def check_newer_release_signposted():
+    """When SI has a release the pinned chart cannot install, say where it lives.
+
+    Added 2026-10-02. Keeps the signal the first version of
+    si_version_not_behind_release carried: the newest `simba-intelligence`
+    image release. If it is ahead of every pinned chart version, a user who
+    runs a script gets an older SI than exists. That is acceptable only if the
+    script tells them so, so each pinning script must name the Logi Composer
+    chart (`composer/composer`), which is how SI 26.3 installs.
+
+    Needs network. Reports NOT APPLICABLE, named and counted, when offline.
+    """
+    pins = _chart_pins()
+    if not pins:
+        record("newer_si_release_signposted", None,
+               "no script pins a CHART_VERSION default")
+        return
+    try:
+        rel = _hub_release_tags("simba-intelligence")
+    except Exception as e:
+        record("newer_si_release_signposted", None,
+               "Docker Hub unreachable (%s); %d pin(s) unchecked"
+               % (type(e).__name__, len(pins)))
+        return
+    if not rel:
+        record("newer_si_release_signposted", None,
+               "no release tags returned by Docker Hub")
+        return
+    newest = max(rel, key=_vt)
+    ahead = [(f, v, body) for f, v, body in pins if _vt(v) < _vt(newest)]
+    silent = sorted({"%s pins %s, SI %s exists and the script never names composer/composer"
+                     % (f, v, newest) for f, v, body in ahead
+                     if "composer/composer" not in body})
+    record("newer_si_release_signposted", not silent,
+           "; ".join(silent[:3]) if silent
+           else "%d pin(s) behind SI %s, all point at composer/composer"
+                % (len(ahead), newest) if ahead
+           else "no pin is behind SI release %s" % newest)
 
 
 print("SIMBA INTELLIGENCE SKILL GATE")
@@ -352,6 +420,7 @@ check_links()
 check_secrets()
 check_collateral_damage()
 check_version_currency()
+check_newer_release_signposted()
 
 ran = {n for n, _, _ in results}
 missing = [n for n in CHECK_MANIFEST if n not in ran]

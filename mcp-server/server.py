@@ -39,6 +39,7 @@ _GUIDE_MAP: dict[str, str] = {
     "gui-install-guide":   "gui-install-guide.md",
     "team-sharing":        "team-sharing.md",
     "teardown":            "teardown.md",
+    "si-26.3-install":     "si-26.3-install.md",
 }
 
 _ENV_TO_GUIDE: dict[str, str] = {

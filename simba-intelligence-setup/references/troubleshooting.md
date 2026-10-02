@@ -314,6 +314,10 @@ On the verified-good lab, `get values` returns only `ingress: enabled: false`.
 **Always use the official published Helm chart** — never just override image
 tags on an old chart. The chart bundles the matching Discovery subchart.
 
+This applies to the standalone chart up to 26.2.1. Do not try to reach 26.3 by
+overriding the image tag on it: 26.3 ships through the Logi Composer chart
+(`composer/composer` 1.22.0). See `references/si-26.3-install.md`.
+
 ```bash
 # Pull the matching chart
 helm pull oci://docker.io/insightsoftware/simba-intelligence-chart \

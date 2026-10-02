@@ -51,6 +51,9 @@ info "Helm is installed"
 # --- Chart version ---
 echo ""
 echo "Find versions at: https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags"
+echo "This installs the standalone SI chart, 26.2.x and earlier. It has no 26.3 GA release."
+echo "For 26.3, SI ships inside the Logi Composer chart (composer/composer):"
+echo "see simba-intelligence-setup/references/si-26.3-install.md in the skill repo."
 echo ""
 read -rp "Chart version to install (e.g. 26.2.1): " CHART_VERSION
 [ -z "$CHART_VERSION" ] && fail "Version is required."

@@ -97,6 +97,10 @@ Go to https://hub.docker.com/r/insightsoftware/simba-intelligence-chart/tags
 and note the latest version number (e.g. `26.2.1`, the newest verified as of 27 August 2026). You will be asked for
 this when the script runs.
 
+The installer scripts install the standalone chart, which stops at 26.2.1. There is no
+26.3 GA release of it. A 26.3 install goes through the Logi Composer chart instead, and
+is not yet a GUI path: see `references/si-26.3-install.md`.
+
 ### Windows
 
 Download `install-si.ps1` and save it to your Downloads folder. Open

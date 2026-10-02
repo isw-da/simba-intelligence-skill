@@ -22,7 +22,7 @@ description: >
 
 # Simba Intelligence — Setup & Operations Skill
 
-<!-- Skill version: 2026-07-11 -->
+<!-- Skill version: 2026-10-02 -->
 
 This skill guides you through the complete Simba Intelligence lifecycle:
 prerequisites, deployment across any Kubernetes environment, local and
@@ -101,7 +101,23 @@ only — don't show both unless they ask.
 
 ---
 
-## Architecture
+## Which version are you installing?
+
+Ask this before anything else. The install method changed at 26.3.
+
+- **26.3 and later, new install:** SI is a sub-component of the Logi Composer Helm chart
+  (`composer/composer`, chart 1.22.0 ships 26.3), switched on with
+  `simbaIntelligence.enabled: true`. The standalone `simba-intelligence-chart` has no
+  26.3 GA release on Docker Hub. Follow `references/si-26.3-install.md`.
+- **26.2.x and earlier, or an existing standalone install:** the architecture, ports and
+  guides below describe the standalone `simba-intelligence-chart` and still apply.
+
+---
+
+## Architecture (standalone chart, 26.2.x and earlier)
+
+For 26.3 on the Composer chart, SI is served under `<contextPath>/intelligence` (default
+`/composer/intelligence`) and MCP at root `/mcp`; see `references/si-26.3-install.md`.
 
 Simba Intelligence consists of three routable web components:
 
@@ -130,10 +146,12 @@ When setting up ingress, ensure all three paths are routed:
 
 ## Deployment decision tree
 
-When a user asks to install SI, determine their environment first:
+When a user asks to install SI, determine the version first (see above), then their
+environment. Every row below except the first describes the standalone 26.2.x chart:
 
 | Scenario | Reference |
 |---|---|
+| New install of 26.3 or later (Logi Composer chart) | `references/si-26.3-install.md` |
 | Fresh machine, nothing installed | `references/prerequisites.md` → then deployment guide |
 | Local development / POC (Docker Desktop or kind) | `references/deployment-local.md` |
 | AWS (EKS) | `references/deployment-eks.md` (dedicated — more setup than other clouds) |
@@ -312,7 +330,9 @@ pre-built scripts, Claude should GENERATE a custom script on the fly.
 
 1. **Target environment:** local / AKS / EKS / GKE / on-prem / air-gapped?
 2. **Operating system:** macOS / Linux / Windows?
-3. **Chart version:** which version? (link to Docker Hub tags)
+3. **Chart version:** which version? (link to Docker Hub tags). If they want 26.3 or
+   later, the script installs the Logi Composer chart instead; build it from
+   `references/si-26.3-install.md`, not from the standalone-chart templates.
 4. **Access method:** port-forward + Caddy (POC) or ingress (production)?
 5. **Ingress details (if production):** hostname, ingress class, TLS?
 6. **Namespace and release name:** defaults (simba-intel / si) or custom?

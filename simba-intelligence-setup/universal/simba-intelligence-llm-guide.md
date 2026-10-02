@@ -133,6 +133,48 @@ kubectl config current-context
 
 ## Deployment
 
+### Which version? Ask first
+
+The install method changed at 26.3 (released 29 September 2026).
+
+- **26.2.x and earlier, or an existing standalone install:** use the standalone chart
+  below. Its newest GA release on Docker Hub is 26.2.1; it has no 26.3 GA release.
+- **New 26.3 install:** SI is a sub-component of the Logi Composer Helm chart. Kubernetes
+  install docs: https://insightsoftware.mintlify.app/simba-embedded-analytics/docs/self-service-analytics/26.3/administer/install/kubernetes-ov.md
+
+```bash
+helm repo add composer https://composer-repo.logianalytics.com/helm-charts/stable
+helm repo update composer
+helm search repo composer/composer --versions   # 1.22.0 = 26.3, 1.21.0 = 26.2
+helm pull composer/composer --version 1.22.0 --untar   # read composer/values.yaml
+```
+
+```yaml
+# composer-si-values.yaml (chart 1.22.0)
+zoomdataWeb:
+  contextPath: /composer               # default; SI is served at <contextPath>/intelligence
+  adminPassword: "<admin-password>"    # or zoomdataWeb.existingSecret; install fails with SI on and neither set
+ingress:
+  hosts: [composer.example.com]
+simbaIntelligence:
+  enabled: true                        # false by default
+  composerPublicUrl: https://composer.example.com/composer   # derived from ingress host if empty; SI fails at runtime without it
+  mcp:
+    enabled: false                     # opt-in; when true, served at root /mcp, port 8001, https only
+    # baseUrl: https://composer.example.com   (origin only, no path)
+```
+
+```bash
+helm install composer composer/composer --version 1.22.0 \
+  -f composer-si-values.yaml --namespace composer --create-namespace
+# Version check once ready (use your own host and context path):
+curl -s https://composer.example.com/composer/intelligence/api/v1/version   # 26.3.0, db_version 4e6e81bb64b6
+curl -s https://composer.example.com/composer/api/version                   # path follows contextPath; observed at /discovery/api/version
+```
+
+Everything from here to the end of the Deployment and Local Access sections describes
+the standalone chart (26.2.x and earlier).
+
 ### Chart source
 
 - Registry: `oci://docker.io/insightsoftware/simba-intelligence-chart`
