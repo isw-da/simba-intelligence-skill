@@ -479,6 +479,27 @@ Workaround: if you have multiple sources and must use a local model, reduce the 
 
 ---
 
+## Licensing (mint, apply, renew)
+
+This applies to any instance: internal, demo or customer. Only insightsoftware staff can mint keys. A customer downloads their instance token, sends it to their insightsoftware contact, and applies the key that comes back. (The Claude skill holds the full runbook in `references/licensing.md`.)
+
+- Simba Agentic Intelligence and Self Service Analytics (formerly Logi Composer) share one licence. A key is bound to one instance, so always mint it from that instance's own token.
+- The built in trial lasts 14 days, allows 5 users and has no AI. AI needs a key with the `SIMBA_INTELLIGENCE` feature.
+- Before minting, check the licence is not Helm managed (`licenseKey` or `license.existingSecret` in the values). If it is, change it through Helm.
+
+Steps (insightsoftware staff):
+
+1. On the instance, open Administration > Licenses (user menu > License on SI 25.x to 26.2). Download the current key as a rollback copy, then Download Instance Token (a `.tok` file). For a customer instance, the customer does this and sends the `.tok`.
+2. Check the token: its middle part is base64url JSON. Its `instanceId` must match the ID on the Licenses page, and its `version` should match the instance version. Stop on a mismatch.
+3. Connect to the insightsoftware VPN, open https://license.dundas.com/ and sign in with insightsoftware SSO.
+4. Use the "Logi Composer: Generate license for internal use" page. Do not use the Simba Agentic Intelligence internal generator page, because it adds `DISABLE_BI_FEATURES`, which hides "Create visual with AI".
+5. Paste the token. Set the expiry (up to 90 days on internal pages, 30 on trial pages), 100 users, 250 sessions, 1 service instance, connector restriction None. Leave the "Simba Agentic Intelligence" feature box unticked and enter `SIMBA_INTELLIGENCE` as the only additional feature ID. Leave version check off.
+6. Read the decoded key before you download it: `SIMBA_INTELLIGENCE` present, `DISABLE_BI_FEATURES` absent, and the expiry you intended. Trust the decoded date, not the button that set it.
+7. Apply the key. On 26.3.1, Administration > Licenses > Choose File > Submit. On older builds, user menu > License > Submit New License. Then sign out and back in; a refresh is not enough on 26.3.1.
+8. Check: the licence shows Valid with the new expiry, Workspaces appears in the left menu, and LLM appears under Administration > Tools.
+
+Traps: a restore brings back the backup's licence, so read the licence status after every restore. A key from another instance is rejected quietly, and a missing AI entitlement can show only as "SIMBA_INTELLIGENCE feature is not licensed" in the browser console. Send tokens and keys only by private email or Teams, never in a shared channel or an LLM chat.
+
 ## Post-Install Configuration
 
 1. **Create a data connection:** Data Connections → Create Connection →

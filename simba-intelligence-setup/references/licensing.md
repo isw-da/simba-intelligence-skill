@@ -54,7 +54,7 @@ The built in Composer trial starts on first startup, generates a unique installa
 
    | Field | Enter or check |
    |---|---|
-   | Description | Optional free text. For a repro or test key, use `insightsoftware internal test` and do not use a customer name. For a customer key, a description such as `<customer> evaluation` is fine; the NexGen key used a customer description. |
+   | Description | Optional free text. For a repro or test key, use `insightsoftware internal test` and do not use a customer name. For a customer key, a description such as `<customer> evaluation` is fine; a customer key minted in November 2026 used one. |
    | Licensee | Fixed to `insightsoftware - <your name>`; cannot be edited. |
    | License Type | Instance, the only option on this page. |
    | Instance Token | Paste the `.tok` contents, drag the file onto the box, or double click to browse. |
@@ -75,7 +75,7 @@ The built in Composer trial starts on first startup, generates a unique installa
 
 6. **Generate and inspect before downloading.** Click Generate License. The page reloads with key text, Download and a Decoded license box. Check `features` includes `SIMBA_INTELLIGENCE` and may include `_LICENSE_INFO`, but excludes `DISABLE_BI_FEATURES`. Check `expiration_date` is the intended date and check the instance hash. Download the `.key` text file; the recorded naming pattern is `SSA-<id>-<licensee>-<description>.key`.
 
-   **Superseded by the actual result (C5):** For NexGen, 12 November 2026, the prompt requested `+30d`, implying 12 December, but the decoded and applied key expired 3 December 2026. Trust the decoded key and live status, not button arithmetic. A guide screenshot showing 1 December was a demo instance, not that customer's key. The discrepancy's cause is unknown.
+   **Superseded by the actual result (C5):** In a customer evaluation, 12 November 2026, the prompt requested `+30d`, implying 12 December, but the decoded and applied key expired 3 December 2026. Trust the decoded key and live status, not button arithmetic. The discrepancy's cause is unknown.
 
 7. **Apply the key.** On 26.3.1, open Administration > Licenses > Choose File, select the `.key`, then Submit. On older SI builds, use user menu > License > Submit New License, choose the key and Submit.
 
@@ -128,9 +128,9 @@ After a standard or trial licence expires, documentation says only system admini
 2. We check the token, mint against that installation, verify the decoded features and expiry, then supply the `.key`. Amin can mint internal SI and Composer keys himself. Do not substitute a key from our lab.
 3. The customer selects the `.key`, submits it, signs out and back in, then checks Valid, expiry, Workspaces and LLM. We verify those results with them.
 
-**Extension contacts and C7 disagreement:** For NexGen, 12 November 2026, the session said to ask **Paige Noble or Leo ZHAO** for an extension. For NexGen, 13 November 2026, the stakeholder slide identified Paige Noble as Account Manager for commercials and licensing, and the status deck named Amin, Leo and Paige as licence owners. These are contacts, not evidence of who approves an extension.
+**Extension contacts and C7 disagreement:** In a customer evaluation, 12 November 2026, the session said to ask **Paige Noble or Leo ZHAO** for an extension. On 13 November 2026, the same evaluation's stakeholder slide identified Paige Noble as Account Manager for commercials and licensing, and the status deck named Amin, Leo and Paige as licence owners. These are contacts, not evidence of who approves an extension.
 
-For NexGen, Leo ZHAO's message of 4 November 2026 offered to get a pixel perfect key when told they were ready; it was read on 9 November. Do not interpret that as the Composer approval process.
+In that evaluation, Leo ZHAO's message of 4 November 2026 offered to get a pixel perfect key when told they were ready; it was read on 9 November. Do not interpret that as the Composer approval process.
 
 The Composer 26 documentation, with no publication date recorded in the evidence compiled 16 November 2026, says keys come through DevNet License Manager to the organisation's License POC; ask the Account Manager if that person is unknown. The Composer chart README for 26.3, also undated in that collection, says to contact Simba support for AI entitlement. No tested newer source resolves these routes or assigns customer extension approval. There is no justified Superseded ruling for C7.
 
@@ -161,7 +161,7 @@ The Composer 26 documentation, with no publication date recorded in the evidence
 
 ## Logi Report, pixel perfect and OEM versus retail
 
-For NexGen, 4 November 2026, Leo ZHAO offered to obtain the pixel perfect licence when they were ready. The 9 November source recorded no request for company details or a server ID. The generator page, minting inputs and maximum duration are unknown; do not use the Composer recipe as a PPR recipe.
+In a customer evaluation, 4 November 2026, Leo ZHAO offered to obtain the pixel perfect licence when they were ready. The 9 November source recorded no request for company details or a server ID. The generator page, minting inputs and maximum duration are unknown; do not use the Composer recipe as a PPR recipe.
 
 Older Logi Report v19 documentation dated 28 November 2024 says to update Server through Server Console > Administration > Configuration > License Key > here, enter the user ID and key supplied by the account manager, then Submit. Designer documentation from 2021 gives this command from `<install_root>\bin`:
 
@@ -185,9 +185,9 @@ The recorded 26.3 entitlement decision says legacy Symphony bundle customers get
 * Who approves customer extensions and how much lead time they need; C7 remains unresolved.
 * Whether an extension uses the same portal page without a new token, or whether an old token stays reusable between runs.
 * Which portal control disables the `instance_id` restriction for a portable key.
-* Why the NexGen key minted on 12 November 2026 expired 3 December rather than the requested 12 December, C5.
+* Why a customer key minted on 12 November 2026 expired 3 December rather than the requested 12 December, C5.
 * Whether Composer trial keys decode like internal keys or add `DISABLE_BI_FEATURES`; the SAI trial behaviour is also untested.
-* The NexGen License POC and DevNet self service arrangement, unrecorded in the 12 November 2026 findings.
+* The customer License POC and DevNet self service arrangement, unrecorded in the 12 November 2026 findings.
 * The intended customer trial user and session limits; 100 and 250 are recorded defaults, not a sizing policy.
 * Whether Leo expects Teams or a ticket for the pixel perfect request; his 4 November 2026 offer does not specify the route.
 * The offline or air gapped renewal procedure; the 6 October 2026 question has no recorded answer.
@@ -207,6 +207,5 @@ The recorded 26.3 entitlement decision says legacy Symphony bundle customers get
 * `~/si-docs-mirror/logi-devnet/articles/general/report/4404609236119-updating-the-designer-license-key.md`.
 * `~/si-docs-mirror/logi-devnet/articles/logi-info/install-logi-info-logi-report/1500009530921-install-logi-info-logi-report.md`.
 * `~/box-rigs/si263/composer/README.md`: chart 1.22.0, appVersion 26.3.
-* `eval-deck/guide/simba-trial-guide.html` and `eval-deck/guide/nexgen-setup-guide.html` in this repo.
 
 Session notes and memory files held by Amin; ask him for detail.
