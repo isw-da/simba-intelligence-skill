@@ -161,6 +161,7 @@ environment. Every row below except the first describes the standalone 26.2.x ch
 | Air-gapped / disconnected network | `references/deployment-airgapped.md` |
 | Uninstall / fresh reinstall | `references/teardown.md` |
 | Backup / restore / move an instance (identity-carry) | `references/backup-restore.md` |
+| Mint, apply, renew or check a licence (trial, AI feature, expiry) | `references/licensing.md` |
 | Build Composer dashboards programmatically (26.2 API) | `references/composer-dashboard-api.md` |
 
 ---

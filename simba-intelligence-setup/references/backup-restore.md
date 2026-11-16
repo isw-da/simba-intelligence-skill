@@ -41,7 +41,7 @@ re-run the dbm job, scale up.
 5. **The licence carries in the DBs**, and licence keys are instance-token-bound
    unless minted with the instance_id restriction disabled. A key with
    `instance_id: enabled=false` is portable across instances.
-6. **DISABLE_BI_FEATURES in the licence silently hides Composer dashboards.**
+6. **DISABLE_BI_FEATURES in the licence silently hides Composer's "Create visual with AI"** (dashboards and SI chat still work; corrected 2 September 2026). Full mint, apply and renew procedure: `licensing.md`.
    If the restored instance needs the BI/visuals surface, check
    `GET /discovery/api/license` (basic auth admin) and look for
    `DISABLE_BI_FEATURES` in features; apply a viz-enabled key via
