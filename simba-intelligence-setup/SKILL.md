@@ -1,23 +1,17 @@
 ---
 name: simba-intelligence-setup
 description: >
-  Install, configure, and troubleshoot Simba Intelligence (SI) — insightsoftware's
-  AI-powered data platform — across any Kubernetes environment. Use this skill
-  whenever the user mentions Simba Intelligence installation, SI setup, Helm chart
-  deployment, SI port-forwarding, SI ingress, SI LLM configuration, SI data
-  connections, SI data source agent, SI playground, SI troubleshooting, SI on
-  Docker Desktop, kind cluster SI, SI on EKS, SI on AKS, SI on GKE, SI on-prem,
-  air-gapped SI, SI teardown, SI fresh install, SI restart, Caddy reverse proxy
-  for SI, Discovery web routing, BYOLLM providers for SI, custom EDC connector,
-  build EDC, GraphQL EDC, or any SI post-install configuration. Also trigger
-  for one-click SI install, SI installer script,
-  GUI installation of SI, setting up SI on a new machine, enabling EDC
-  connectors, adding JDBC drivers, SI connector setup, or SI EDC configuration.
-  Also trigger for connecting SI to SAP Datasphere, SAP HANA Cloud, or HANA
-  on-prem (saphana vs saphanacloud EDC selection, ngdbc.jar staging, Datasphere
-  Database User and Open SQL Schema setup, JDBC URL format for HANA Cloud).
-  Do NOT use for general Kubernetes or Helm questions unrelated to Simba
-  Intelligence.
+  Install, configure, licence and troubleshoot Simba Intelligence (SI),
+  insightsoftware's AI data platform, on any Kubernetes environment (Docker Desktop,
+  kind, EKS, AKS, GKE, on-prem, air-gapped). Use whenever the user mentions SI
+  installation or setup, the Helm chart, port-forwarding, ingress, Caddy or Discovery
+  routing, LLM or BYOLLM configuration, data connections, the data source agent, the
+  playground, teardown, restart or a fresh install. Also use for the SI installer script
+  or GUI install, EDC connectors and JDBC drivers (including custom and GraphQL EDCs,
+  SAP Datasphere, HANA Cloud and HANA on-prem), and for SI licences: trial expiry,
+  minting, applying or renewing a key, the instance token, the SIMBA_INTELLIGENCE
+  feature or a missing AI menu. Do NOT use for general Kubernetes or Helm questions
+  unrelated to SI.
 ---
 
 # Simba Intelligence — Setup & Operations Skill
